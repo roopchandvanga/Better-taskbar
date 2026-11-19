@@ -25,8 +25,10 @@ public class PopoverWindow : Window
 
     private readonly FrameworkElement? _anchor;
     private readonly Border _frame;
-    private readonly TranslateTransform _slide = new();
+    private readonly ScaleTransform _scale = new(1, 1);
     private bool _closing;
+    private bool _exitDone;
+    private bool _closed;
 
     public static bool IsOpen => _current is not null;
 
@@ -105,7 +107,7 @@ public class PopoverWindow : Window
             Padding = new Thickness(16),
             Child = content,
             Opacity = 0,
-            RenderTransform = _slide,
+            RenderTransform = _scale,
         };
         _frame.SetResourceReference(Border.BackgroundProperty, "SurfaceBackground");
         _frame.SetResourceReference(TextElement.ForegroundProperty, "SurfaceForeground");
@@ -140,14 +142,37 @@ public class PopoverWindow : Window
             : ay - ActualHeight - 18;
     }
 
+    private const double AppearMs = 280;
+    private const double ExitMs = 120;
+
+    private static bool FromBelow => AppServices.Settings.Current.Edge != DockEdge.Top;
+
+    /// <summary>
+    /// Rise out of the dock and grow from the element that opened it. The acrylic is drawn by Windows for the
+    /// whole window and can't fade, so the window itself slides while its content fades and scales.
+    /// </summary>
     private void Appear()
     {
         Position();
-        var fromBelow = AppServices.Settings.Current.Edge != DockEdge.Top;
-        _slide.Y = fromBelow ? 10 : -10;
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        _frame.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(140)));
-        _slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+        var rest = Top;
+        _frame.RenderTransformOrigin = new Point(AnchorFraction(), FromBelow ? 1 : 0);
+        Motion.To(_frame, OpacityProperty, 1, Motion.Fast);
+        Motion.To(_scale, ScaleTransform.ScaleXProperty, 1, AppearMs, Motion.Spring, from: 0.94);
+        Motion.To(_scale, ScaleTransform.ScaleYProperty, 1, AppearMs, Motion.Spring, from: 0.94);
+        Motion.To(this, TopProperty, rest, AppearMs, Motion.Spring, from: rest + (FromBelow ? 10 : -10), done: () =>
+        {
+            BeginAnimation(TopProperty, null);
+            if (!_closing) Position();
+        });
+    }
+
+    /// <summary>Where the anchor's centre falls across this window (0..1), so the panel grows out of it.</summary>
+    private double AnchorFraction()
+    {
+        if (_anchor is null || PresentationSource.FromVisual(_anchor) is null || ActualWidth <= 0) return 0.5;
+        var dpi = VisualTreeHelper.GetDpi(_anchor);
+        var x = _anchor.PointToScreen(new Point(_anchor.ActualWidth / 2, 0)).X / dpi.DpiScaleX;
+        return Math.Clamp((x - Left) / ActualWidth, 0.1, 0.9);
     }
 
     protected override void OnDeactivated(EventArgs e)
@@ -156,14 +181,32 @@ public class PopoverWindow : Window
         if (ShowActivated && !_closing) Close();
     }
 
+    /// <summary>The first Close plays the exit (sink toward the dock, fade, shrink a little), then really closes.</summary>
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
+        if (!_exitDone && IsVisible && Motion.Enabled && !Dispatcher.HasShutdownStarted)
+        {
+            e.Cancel = true;
+            if (_closing) return; // already on its way out
+            _closing = true;
+            if (ReferenceEquals(_current, this)) CurrentChanged?.Invoke();
+            Motion.To(_frame, OpacityProperty, 0, ExitMs, Motion.EaseIn);
+            Motion.To(_scale, ScaleTransform.ScaleXProperty, 0.97, ExitMs, Motion.EaseIn);
+            Motion.To(_scale, ScaleTransform.ScaleYProperty, 0.97, ExitMs, Motion.EaseIn);
+            Motion.To(this, TopProperty, Top + (FromBelow ? 6 : -6), ExitMs, Motion.EaseIn, done: () =>
+            {
+                _exitDone = true;
+                if (!_closed) Close();
+            });
+            return;
+        }
         _closing = true;
         base.OnClosing(e);
     }
 
     protected override void OnClosed(EventArgs e)
     {
+        _closed = true;
         base.OnClosed(e);
         if (ReferenceEquals(_current, this))
         {

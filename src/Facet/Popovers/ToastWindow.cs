@@ -37,7 +37,7 @@ public sealed class ToastWindow : PopoverWindow
         {
             _dismiss.Stop();
             Open.Remove(this);
-            foreach (var t in Open) t.Position();
+            foreach (var t in Open) t.Restack();
         };
     }
 
@@ -49,7 +49,29 @@ public sealed class ToastWindow : PopoverWindow
 
     protected override void Position()
     {
-        if (PresentationSource.FromVisual(_dockAnchor) is null) return;
+        if (Slot() is not { } slot) return;
+        Left = slot.X;
+        Top = slot.Y;
+    }
+
+    /// <summary>A toast below this one closed: glide down (or up) into its new place in the stack.</summary>
+    private void Restack()
+    {
+        if (Slot() is not { } slot) return;
+        Left = slot.X;
+        var from = Top;
+        if (Math.Abs(from - slot.Y) < 0.5) return;
+        Motion.To(this, TopProperty, slot.Y, Motion.Normal, Motion.EaseOut, from: from, done: () =>
+        {
+            BeginAnimation(TopProperty, null);
+            Top = slot.Y;
+        });
+    }
+
+    /// <summary>Top-left of this toast's place: stacked above the dock's right end, newest nearest the dock.</summary>
+    private Point? Slot()
+    {
+        if (PresentationSource.FromVisual(_dockAnchor) is null) return null;
         var dpi = VisualTreeHelper.GetDpi(_dockAnchor);
         var origin = _dockAnchor.PointToScreen(new Point(0, 0));
         var right = (origin.X / dpi.DpiScaleX) + _dockAnchor.ActualWidth;
@@ -57,11 +79,9 @@ public sealed class ToastWindow : PopoverWindow
         var bottom = top + _dockAnchor.ActualHeight;
         var index = Open.IndexOf(this);
         var offset = Open.Take(Math.Max(0, index)).Sum(t => t.ActualHeight + 10);
-
-        Left = right - ActualWidth;
-        Top = AppServices.Settings.Current.Edge == DockEdge.Top
+        return new Point(right - ActualWidth, AppServices.Settings.Current.Edge == DockEdge.Top
             ? bottom + 12 + offset
-            : top - ActualHeight - 12 - offset;
+            : top - ActualHeight - 12 - offset);
     }
 
     private static FrameworkElement BuildContent(Alert alert, Action<AlertAction> onAction, out Button close)
