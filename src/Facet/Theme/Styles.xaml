@@ -79,7 +79,11 @@
                         <Image x:Name="Icon" Source="{Binding Icon}" Width="{DynamicResource IconSize}" Height="{DynamicResource IconSize}"
                                RenderOptions.BitmapScalingMode="HighQuality" RenderTransformOrigin="0.5,0.8">
                             <Image.RenderTransform>
-                                <ScaleTransform x:Name="Scale" />
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="Scale" />
+                                    <!-- the launch bounce -->
+                                    <TranslateTransform x:Name="Lift" />
+                                </TransformGroup>
                             </Image.RenderTransform>
                         </Image>
                         <Border x:Name="Dot" Width="{DynamicResource DotSize}" Height="{DynamicResource DotSize}" CornerRadius="{DynamicResource DotRadius}"

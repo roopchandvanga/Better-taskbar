@@ -178,15 +178,117 @@ internal sealed class AppStripAnimator
         if (e.OldItems is not null)
             foreach (var item in e.OldItems.OfType<AppItem>()) item.PropertyChanged -= OnItemChanged;
         if (e.NewItems is not null)
-            foreach (var item in e.NewItems.OfType<AppItem>()) item.PropertyChanged += OnItemChanged;
+        {
+            foreach (var item in e.NewItems.OfType<AppItem>())
+            {
+                item.PropertyChanged += OnItemChanged;
+                // a newly added app (Move is just reordering): its container exists already, not yet drawn
+                if (e.Action == NotifyCollectionChangedAction.Add) Arrive(item);
+            }
+        }
         if (e.Action == NotifyCollectionChangedAction.Reset)
             foreach (var item in _apps.Items.OfType<AppItem>()) { item.PropertyChanged -= OnItemChanged; item.PropertyChanged += OnItemChanged; }
     }
 
     private void OnItemChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(AppItem.IsActive))
-            _apps.Dispatcher.BeginInvoke(() => PlaceBar(animate: true), System.Windows.Threading.DispatcherPriority.Loaded);
+        if (sender is not AppItem item) return;
+        switch (e.PropertyName)
+        {
+            case nameof(AppItem.IsActive):
+                _apps.Dispatcher.BeginInvoke(() => PlaceBar(animate: true), System.Windows.Threading.DispatcherPriority.Loaded);
+                break;
+            case nameof(AppItem.IsLeaving):
+                if (Container(item) is { } container) Presence(container, item.IsLeaving ? 0 : 1);
+                break;
+            case nameof(AppItem.IsLaunching):
+                Bounce(item);
+                break;
+        }
+    }
+
+    // ───────────────────────── apps arriving, leaving, launching ─────────────────────────
+
+    private const double ArriveMs = 260;
+    private const double LeaveMs = 220;
+    private const double BounceHeight = 8;
+
+    /// <summary>A new app opens a gap that widens to full size while its icon fades in.</summary>
+    private void Arrive(AppItem item)
+    {
+        if (!Motion.Enabled) return;
+        if (Container(item) is { } container)
+        {
+            Presence(container, 1, from: 0);
+            return;
+        }
+        // not generated yet (shouldn't happen for this non-virtualised list): do it once it is
+        _apps.Dispatcher.BeginInvoke(() =>
+        {
+            if (Container(item) is { } later) Presence(later, 1, from: 0);
+        }, System.Windows.Threading.DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    /// How much of an app's slot is there: 0 = gone, 1 = fully there. The slot narrows through negative
+    /// margins (so the neighbours slide over) while the icon shrinks evenly and fades — never squashed.
+    /// </summary>
+    private static readonly DependencyProperty PresenceProperty = DependencyProperty.RegisterAttached("Presence",
+        typeof(double), typeof(AppStripAnimator), new PropertyMetadata(1.0, OnPresenceChanged));
+
+    private static void Presence(FrameworkElement container, double to, double? from = null)
+    {
+        if (from is { } f) Motion.Set(container, PresenceProperty, f);
+        var leaving = to < 1;
+        Motion.To(container, PresenceProperty, to, leaving ? LeaveMs : ArriveMs, leaving ? Motion.EaseIn : Motion.EaseOut);
+    }
+
+    private static void OnPresenceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FrameworkElement container) return;
+        var p = Math.Clamp((double)e.NewValue, 0, 1);
+        var item = container.TryFindResource("ItemSize") is double size ? size : 48;
+        var spacing = container.TryFindResource("AppSpacing") is Thickness t ? t.Left + t.Right : 6;
+        var collapse = -(1 - p) * (item + spacing) / 2;
+        container.Margin = p >= 1 ? new Thickness() : new Thickness(collapse, 0, collapse, 0);
+        container.Opacity = Math.Clamp(p * 1.25 - 0.1, 0, 1); // fades a little ahead of the size
+        if (FindDescendant<Button>(container) is not { } button) return;
+        if (button.RenderTransform is not ScaleTransform grow || grow.IsFrozen)
+        {
+            grow = new ScaleTransform(1, 1);
+            button.RenderTransform = grow;
+            button.RenderTransformOrigin = new Point(0.5, 0.8);
+        }
+        grow.ScaleX = grow.ScaleY = 0.4 + 0.6 * p;
+    }
+
+    /// <summary>
+    /// macOS-style launch bounce until the app's window shows up. With motion off, the icon dims instead.
+    /// The only looping animation in the dock, and it stops by itself (AppTracker gives up after 10 s).
+    /// </summary>
+    private void Bounce(AppItem item)
+    {
+        if (Container(item) is not { } container || TemplatePart<TranslateTransform>(container, "Lift") is not { } lift
+            || TemplatePart<Image>(container, "Icon") is not { } icon) return;
+
+        if (!item.IsLaunching)
+        {
+            Motion.To(lift, TranslateTransform.YProperty, 0, Motion.Fast, Motion.EaseOut);
+            Motion.Set(icon, UIElement.OpacityProperty, 1);
+            return;
+        }
+        if (!Motion.Enabled)
+        {
+            Motion.Set(icon, UIElement.OpacityProperty, 0.55);
+            return;
+        }
+        var hop = new System.Windows.Media.Animation.DoubleAnimation(0, -BounceHeight, TimeSpan.FromMilliseconds(300))
+        {
+            AutoReverse = true,
+            RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever,
+            EasingFunction = new System.Windows.Media.Animation.QuadraticEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+        };
+        lift.BeginAnimation(TranslateTransform.YProperty, hop);
     }
 
     /// <summary>Put the line under the active app: glide there from the last one, or fade in if there was none.</summary>
@@ -242,10 +344,10 @@ internal sealed class AppStripAnimator
             ? VisualTreeHelper.GetChild(button, 0) as FrameworkElement
             : null;
 
-    private static ScaleTransform? IconScale(FrameworkElement container) =>
-        FindDescendant<Button>(container) is { } button && button.Template?.FindName("Icon", button) is Image { RenderTransform: ScaleTransform scale }
-            ? scale
-            : null;
+    private static ScaleTransform? IconScale(FrameworkElement container) => TemplatePart<ScaleTransform>(container, "Scale");
+
+    private static T? TemplatePart<T>(FrameworkElement container, string name) where T : class =>
+        FindDescendant<Button>(container) is { } button && button.Template?.FindName(name, button) is T part ? part : null;
 
     private static T? FindDescendant<T>(DependencyObject root) where T : DependencyObject
     {

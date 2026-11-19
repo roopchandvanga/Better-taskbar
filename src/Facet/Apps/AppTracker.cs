@@ -117,7 +117,13 @@ public sealed class AppTracker
         if (string.IsNullOrEmpty(target)) return;
         if (target.StartsWith("shell:", StringComparison.OrdinalIgnoreCase)) AppServices.Open("explorer.exe", target);
         else AppServices.Open(target);
+
+        // bounce until a new window shows up (or give up after a while: some apps open none, or reuse one)
+        item.LaunchedFrom = (DateTime.UtcNow, item.Windows.Count);
+        item.IsLaunching = true;
     }
+
+    private static readonly TimeSpan LaunchTimeout = TimeSpan.FromSeconds(10);
 
     // ───────────────────────── drag and drop ─────────────────────────
 
@@ -371,6 +377,8 @@ public sealed class AppTracker
         if (windows is not null) item.Windows.AddRange(windows);
         item.WindowCount = item.Windows.Count;
         item.IsRunning = item.Windows.Count > 0;
+        if (item.IsLaunching && (item.Windows.Count > item.LaunchedFrom.Windows || DateTime.UtcNow - item.LaunchedFrom.At > LaunchTimeout))
+            item.IsLaunching = false;
         item.IsActive = item.Windows.Contains(fg) || item.Windows.Contains(Foreground) && IsOwn(fg);
         item.Tooltip = item.Windows.Count == 1
             ? $"{item.Name} — {Native.GetWindowTitle(item.Windows[0])}"
@@ -386,8 +394,13 @@ public sealed class AppTracker
         }
     }
 
+    private const int LeaveMs = 240;
+    private readonly Dictionary<AppItem, DateTime> _leaving = [];
+    private DispatcherTimer? _sweep;
+
     private void Sync(List<AppItem> desired)
     {
+        desired = KeepLeaving(desired);
         for (var i = 0; i < desired.Count; i++)
         {
             if (i < Items.Count && ReferenceEquals(Items[i], desired[i])) continue;
@@ -396,6 +409,66 @@ public sealed class AppTracker
             else Items.Insert(i, desired[i]);
         }
         while (Items.Count > desired.Count) Items.RemoveAt(Items.Count - 1);
+    }
+
+    /// <summary>
+    /// An app that just left the dock (closed, or unpinned while not running) stays a moment, in its place and
+    /// flagged <see cref="AppItem.IsLeaving"/>, so the dock can shrink it away; a sweep then removes it. One that
+    /// comes back in the meantime simply stays.
+    /// </summary>
+    private List<AppItem> KeepLeaving(List<AppItem> desired)
+    {
+        var now = DateTime.UtcNow;
+        var wanted = new HashSet<AppItem>(desired);
+        foreach (var back in _leaving.Keys.Where(wanted.Contains).ToList())
+        {
+            _leaving.Remove(back);
+            back.IsLeaving = false;
+        }
+        if (Theme.Motion.Enabled)
+        {
+            foreach (var item in Items)
+            {
+                if (wanted.Contains(item) || _leaving.ContainsKey(item)) continue;
+                _leaving[item] = now;
+                item.IsLeaving = true;
+                item.IsLaunching = false;
+                item.IsActive = false; // the active-app line moves on right away
+                item.IsRunning = false;
+            }
+        }
+        foreach (var gone in _leaving.Where(kv => (now - kv.Value).TotalMilliseconds >= LeaveMs || !Theme.Motion.Enabled).Select(kv => kv.Key).ToList())
+            _leaving.Remove(gone);
+        if (_leaving.Count == 0) return desired;
+
+        // in place: right after whichever item preceded it on the dock
+        var result = new List<AppItem>(desired);
+        for (var i = 0; i < Items.Count; i++)
+        {
+            if (!_leaving.ContainsKey(Items[i])) continue;
+            var at = 0;
+            for (var j = i - 1; j >= 0; j--)
+            {
+                var before = result.IndexOf(Items[j]);
+                if (before < 0) continue;
+                at = before + 1;
+                break;
+            }
+            result.Insert(at, Items[i]);
+        }
+
+        if (_sweep is null)
+        {
+            _sweep = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(LeaveMs + 20) };
+            _sweep.Tick += (_, _) =>
+            {
+                _sweep.Stop();
+                Refresh();
+            };
+        }
+        _sweep.Stop();
+        _sweep.Start();
+        return result;
     }
 
     private static System.Windows.Media.ImageSource? LoadIcon(AppItem item, IntPtr hwnd, int size)

@@ -10,7 +10,7 @@ public sealed class AppItem(string key) : ObservableObject
     private string _name = "";
     private string _tooltip = "";
     private ImageSource? _icon;
-    private bool _isPinned, _isRunning, _isActive, _isDropTarget;
+    private bool _isPinned, _isRunning, _isActive, _isDropTarget, _isLeaving, _isLaunching;
     private int _windowCount;
 
     public string Key { get; } = key;
@@ -24,6 +24,13 @@ public sealed class AppItem(string key) : ObservableObject
     public int WindowCount { get => _windowCount; set => Set(ref _windowCount, value); }
     /// <summary>A file is being dragged over this icon (highlights it).</summary>
     public bool IsDropTarget { get => _isDropTarget; set => Set(ref _isDropTarget, value); }
+    /// <summary>Gone from the dock: it stays a moment, in place, while the dock animates it out.</summary>
+    public bool IsLeaving { get => _isLeaving; set => Set(ref _isLeaving, value); }
+    /// <summary>Started from the dock and no new window yet (the icon bounces).</summary>
+    public bool IsLaunching { get => _isLaunching; set => Set(ref _isLaunching, value); }
+
+    /// <summary>When the launch started and how many windows the app had then.</summary>
+    internal (DateTime At, int Windows) LaunchedFrom { get; set; }
 
     /// <summary>Top-level windows in z-order (front first).</summary>
     public List<IntPtr> Windows { get; } = [];
