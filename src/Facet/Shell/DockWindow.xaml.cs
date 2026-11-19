@@ -222,9 +222,10 @@ public partial class DockWindow : Window
         var s = AppServices.Settings.Current;
         if (_appBar is null) return;
         // a dock that stays up keeps its own strip of the screen, like the taskbar: maximized windows stop
-        // above it instead of going under it. Auto-hide gives the strip back (the dock only slides in over
-        // things for a moment), and so does a dock that has moved away from the main display.
-        if (s.AutoHide || (s.FollowPointerDisplay && _monitor != IntPtr.Zero))
+        // above it instead of going under it (Settings: Reserve screen space, on by default). Auto-hide gives
+        // the strip back (the dock only slides in over things for a moment), and so does a dock that has
+        // moved away from the main display.
+        if (!s.ReserveScreenSpace || s.AutoHide || (s.FollowPointerDisplay && _monitor != IntPtr.Zero))
         {
             _appBar.Release();
             _reserved = null;

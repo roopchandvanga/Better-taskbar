@@ -147,7 +147,15 @@
                         <CheckBox x:Name="AutoHide" Style="{StaticResource Switch}" Click="Changed">
                             <StackPanel>
                                 <TextBlock Text="Auto-hide the dock" FontWeight="SemiBold" />
-                                <TextBlock Text="The dock stays out of sight and slides up when the cursor touches the bottom edge of the screen (top edge when docked at the top). Off: the dock keeps its own strip at that edge, and maximized windows stop above it instead of going under it." Style="{StaticResource Caption}" />
+                                <TextBlock Text="The dock stays out of sight and slides up when the cursor touches the bottom edge of the screen (top edge when docked at the top)." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+                    <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="ReserveScreenSpace" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Reserve screen space" FontWeight="SemiBold" />
+                                <TextBlock Text="When auto-hide is off: the dock keeps its own strip of the screen, so maximized windows stop above it instead of going under it." Style="{StaticResource Caption}" />
                             </StackPanel>
                         </CheckBox>
                     </Border>

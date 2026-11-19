@@ -91,6 +91,11 @@ public sealed class FacetSettings
     public bool AutoHide { get; set; } = true;
     public bool LaunchAtStartup { get; set; }
     public bool HideTaskbar { get; set; }
+    /// <summary>
+    /// With auto-hide off, keep the dock's strip of the screen (an AppBar, like the taskbar) so maximized windows
+    /// stop above it. A new name (the old "ReserveSpace" defaulted to off), so earlier settings files get it on.
+    /// </summary>
+    public bool ReserveScreenSpace { get; set; } = true;
     public bool HideInFullscreen { get; set; } = true;
     /// <summary>With several displays: hold the pointer at another display's edge and the dock moves there.</summary>
     public bool FollowPointerDisplay { get; set; }

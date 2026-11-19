@@ -24,11 +24,12 @@ public class SettingsTests : IDisposable
     public void OlderSettingsFilesGetTheNotificationsButton()
     {
         var path = Path.Combine(_dir, "settings.json");
-        File.WriteAllText(path, """{ "Theme": "Black", "Clock24": true }""");
+        File.WriteAllText(path, """{ "Theme": "Black", "Clock24": true, "ReserveSpace": false }""");
         var loaded = JsonStore.Load<FacetSettings>(path);
         Assert.Equal(DockTheme.Black, loaded.Theme);
         Assert.True(loaded.ShowNotifications);
         Assert.True(loaded.Animations);
+        Assert.True(loaded.ReserveScreenSpace); // the old, off-by-default switch doesn't carry over
     }
 
     [Fact]

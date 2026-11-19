@@ -203,6 +203,8 @@ public partial class SettingsWindow : Window
         WindowsAccent.IsChecked = S.WindowsAccent;
         AutoHide.IsChecked = S.AutoHide;
         HideTaskbar.IsChecked = S.HideTaskbar;
+        ReserveScreenSpace.IsChecked = S.ReserveScreenSpace;
+        ReserveScreenSpace.IsEnabled = !S.AutoHide; // only matters while the dock stays up
         HideInFullscreen.IsChecked = S.HideInFullscreen;
         FollowPointerDisplay.IsChecked = S.FollowPointerDisplay;
         LaunchAtStartup.IsChecked = S.LaunchAtStartup;
@@ -228,6 +230,7 @@ public partial class SettingsWindow : Window
         S.WindowsAccent = WindowsAccent.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;
         S.HideTaskbar = HideTaskbar.IsChecked == true;
+        S.ReserveScreenSpace = ReserveScreenSpace.IsChecked == true;
         S.HideInFullscreen = HideInFullscreen.IsChecked == true;
         S.FollowPointerDisplay = FollowPointerDisplay.IsChecked == true;
         S.LaunchAtStartup = LaunchAtStartup.IsChecked == true;
