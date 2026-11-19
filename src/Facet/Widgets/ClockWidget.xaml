@@ -4,8 +4,21 @@
     <!-- a transparent tile (it shows only on hover), spaced like the widgets beside it -->
     <Button x:Name="Btn" Style="{StaticResource PlainTileButton}" Click="Btn_Click">
         <StackPanel VerticalAlignment="Center">
-            <TextBlock x:Name="Time" Style="{StaticResource TileText}" FontSize="{DynamicResource DockBigFont}" HorizontalAlignment="Right"
-                       Typography.NumeralAlignment="Tabular" />
+            <!-- on the minute, the old time rolls up and out while the new one rolls in from below -->
+            <Grid HorizontalAlignment="Right">
+                <TextBlock x:Name="TimeOld" Style="{StaticResource TileText}" FontSize="{DynamicResource DockBigFont}" HorizontalAlignment="Right"
+                           Typography.NumeralAlignment="Tabular" Opacity="0">
+                    <TextBlock.RenderTransform>
+                        <TranslateTransform x:Name="TimeOldShift" />
+                    </TextBlock.RenderTransform>
+                </TextBlock>
+                <TextBlock x:Name="Time" Style="{StaticResource TileText}" FontSize="{DynamicResource DockBigFont}" HorizontalAlignment="Right"
+                           Typography.NumeralAlignment="Tabular">
+                    <TextBlock.RenderTransform>
+                        <TranslateTransform x:Name="TimeShift" />
+                    </TextBlock.RenderTransform>
+                </TextBlock>
+            </Grid>
             <TextBlock x:Name="Date" Style="{StaticResource TileSubText}" HorizontalAlignment="Right" />
         </StackPanel>
     </Button>

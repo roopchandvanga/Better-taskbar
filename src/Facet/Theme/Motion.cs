@@ -55,6 +55,66 @@ internal static class Motion
         ((DependencyObject)target).SetValue(dp, value);
     }
 
+    // ───────────────────────── attached behaviours (usable from templates) ─────────────────────────
+
+    /// <summary>
+    /// On a bound TextBlock (binding with NotifyOnTargetUpdated=True): a new value fades in and settles from
+    /// slightly below, instead of just replacing the old one. The first value, set while loading, doesn't.
+    /// </summary>
+    public static readonly DependencyProperty FadeOnUpdateProperty = DependencyProperty.RegisterAttached("FadeOnUpdate",
+        typeof(bool), typeof(Motion), new PropertyMetadata(false, OnFadeOnUpdateChanged));
+
+    public static bool GetFadeOnUpdate(DependencyObject d) => (bool)d.GetValue(FadeOnUpdateProperty);
+    public static void SetFadeOnUpdate(DependencyObject d, bool value) => d.SetValue(FadeOnUpdateProperty, value);
+
+    private static void OnFadeOnUpdateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FrameworkElement element || e.NewValue is not true) return;
+        element.AddHandler(System.Windows.Data.Binding.TargetUpdatedEvent, new EventHandler<System.Windows.Data.DataTransferEventArgs>((_, args) =>
+        {
+            if (!element.IsLoaded || args.Property != System.Windows.Controls.TextBlock.TextProperty) return;
+            if (element.RenderTransform is not System.Windows.Media.TranslateTransform shift || shift.IsFrozen)
+                element.RenderTransform = shift = new System.Windows.Media.TranslateTransform();
+            To(element, UIElement.OpacityProperty, 1, Slow, EaseOut, from: 0.15);
+            To(shift, System.Windows.Media.TranslateTransform.YProperty, 0, Slow, Spring, from: 4);
+        }));
+    }
+
+    /// <summary>
+    /// On a ControlTile check box: switching it on fills its round icon with the accent from the centre outward;
+    /// switching it off drains it back. Needs a template ScaleTransform named "FillScale" on the accent disc.
+    /// </summary>
+    public static readonly DependencyProperty FillOnCheckProperty = DependencyProperty.RegisterAttached("FillOnCheck",
+        typeof(bool), typeof(Motion), new PropertyMetadata(false, OnFillOnCheckChanged));
+
+    public static bool GetFillOnCheck(DependencyObject d) => (bool)d.GetValue(FillOnCheckProperty);
+    public static void SetFillOnCheck(DependencyObject d, bool value) => d.SetValue(FillOnCheckProperty, value);
+
+    private static void OnFillOnCheckChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not System.Windows.Controls.Primitives.ToggleButton tile || e.NewValue is not true) return;
+        System.Windows.Media.ScaleTransform? Fill() =>
+            tile.Template?.FindName("FillScale", tile) as System.Windows.Media.ScaleTransform;
+        void Show(bool animate)
+        {
+            if (Fill() is not { } fill) return;
+            var on = tile.IsChecked == true ? 1.0 : 0.0;
+            if (!animate)
+            {
+                Set(fill, System.Windows.Media.ScaleTransform.ScaleXProperty, on);
+                Set(fill, System.Windows.Media.ScaleTransform.ScaleYProperty, on);
+                return;
+            }
+            var ease = on > 0 ? Spring : EaseIn;
+            var ms = on > 0 ? Slow : Fast;
+            To(fill, System.Windows.Media.ScaleTransform.ScaleXProperty, on, ms, ease);
+            To(fill, System.Windows.Media.ScaleTransform.ScaleYProperty, on, ms, ease);
+        }
+        tile.Loaded += (_, _) => Show(animate: false);
+        tile.Checked += (_, _) => Show(animate: tile.IsLoaded);
+        tile.Unchecked += (_, _) => Show(animate: tile.IsLoaded);
+    }
+
     private static T Frozen<T>(T freezable) where T : Freezable
     {
         freezable.Freeze();

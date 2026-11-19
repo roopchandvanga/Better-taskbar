@@ -13,7 +13,29 @@ namespace Facet.Controls;
 /// </summary>
 public sealed class Gauge : FrameworkElement
 {
-    public static readonly DependencyProperty ValueProperty = Register(nameof(Value), typeof(double), 0.0);
+    public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(nameof(Value), typeof(double),
+        typeof(Gauge), new FrameworkPropertyMetadata(0.0, OnValueChanged));
+
+    /// <summary>The value the arcs are drawn at: follows <see cref="Value"/>, sweeping over to a new one.</summary>
+    private static readonly DependencyProperty ShownProperty = Register("Shown", typeof(double), 0.0);
+
+    /// <summary>0..1 through a one-off glow (e.g. the charger was plugged in); 0 = none.</summary>
+    private static readonly DependencyProperty PulseProperty = Register("PulseProgress", typeof(double), 0.0);
+
+    private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var gauge = (Gauge)d;
+        // values set while the tile is being built show at once; later changes sweep
+        if (gauge.IsLoaded) Motion.To(gauge, ShownProperty, (double)e.NewValue, 500, Motion.EaseInOut);
+        else Motion.Set(gauge, ShownProperty, (double)e.NewValue);
+    }
+
+    /// <summary>A soft ring of light that swells out of the gauge and fades (nothing when motion is off).</summary>
+    public void Pulse()
+    {
+        if (!IsLoaded || !Motion.Enabled) return;
+        Motion.To(this, PulseProperty, 1, 750, Motion.EaseOut, from: 0, done: () => Motion.Set(this, PulseProperty, 0));
+    }
     public static readonly DependencyProperty LabelProperty = Register(nameof(Label), typeof(string), null);
     public static readonly DependencyProperty GlyphProperty = Register(nameof(Glyph), typeof(string), null);
     public static readonly DependencyProperty FillProperty = Register(nameof(Fill), typeof(Brush), null);
@@ -90,10 +112,21 @@ public sealed class Gauge : FrameworkElement
         DrawArc(dc, track, c, r, leftStart, sweep);
         DrawArc(dc, track, c, r, rightStart, sweep);
 
-        var value = Math.Clamp(Value, 0, 100);
+        var pulse = (double)GetValue(PulseProperty);
+        if (pulse is > 0 and < 1)
+        {
+            var glow = Fill ?? fg;
+            var glowColor = glow is SolidColorBrush gs ? gs.Color : fgColor;
+            var halo = new Pen(new SolidColorBrush(Color.FromArgb((byte)(150 * (1 - pulse)), glowColor.R, glowColor.G, glowColor.B)),
+                stroke * (1 + 2.5 * pulse)) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+            DrawArc(dc, halo, c, r, leftStart, sweep);
+            DrawArc(dc, halo, c, r, rightStart, sweep);
+        }
+
+        var value = Math.Clamp((double)GetValue(ShownProperty), 0, 100);
         if (value > 0)
         {
-            var brush = Fill ?? (value <= WarnAt ? WarnFill : fg);
+            var brush = Fill ?? (Math.Clamp(Value, 0, 100) <= WarnAt ? WarnFill : fg);
             var pen = new Pen(brush, stroke) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
             var filled = Math.Max(0.02, value / 100 * sweep * 2);
             DrawArc(dc, pen, c, r, leftStart, Math.Min(filled, sweep));

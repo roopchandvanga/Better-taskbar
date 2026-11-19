@@ -29,6 +29,7 @@ public partial class ConnectWidget : UserControl
 
     private readonly Dictionary<string, Button> _items;
     private bool _batteryHasOwnRing;
+    private bool? _wasCharging; // null until the first update, so starting up on the charger doesn't glow
 
     public ConnectWidget()
     {
@@ -119,6 +120,11 @@ public partial class ConnectWidget : UserControl
         NetworkGlyph.Glyph = net.NetworkGlyph;
         NetworkGlyph.Opacity = glyphOpacity;
         Network.ToolTip = batteryInRing ? $"{power.BatterySummary}\n{net.NetworkTooltip}" : net.NetworkTooltip;
+
+        // charger just plugged in: a glow swells out of whichever ring shows the battery
+        if (power.HasBattery && power.Charging && _wasCharging == false)
+            (_batteryHasOwnRing ? BatteryRing : NetworkRing).Pulse();
+        _wasCharging = power.HasBattery ? power.Charging : null;
 
         // battery on its own: the same ring, a battery inside
         Battery.Visibility = power.HasBattery ? Visibility.Visible : Visibility.Collapsed;

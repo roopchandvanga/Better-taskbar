@@ -9,9 +9,18 @@
     <Button x:Name="Btn" Style="{StaticResource PlainTileButton}" Padding="4,0"
             Click="Btn_Click" MouseRightButtonUp="Btn_RightClick">
         <Grid Width="{DynamicResource IconSlot}" Height="{DynamicResource GaugeSize}">
-            <c:GlyphIcon x:Name="Bell" FontSize="15" />
+            <!-- swings from its top when a notification arrives -->
+            <c:GlyphIcon x:Name="Bell" FontSize="15" RenderTransformOrigin="0.5,0.3">
+                <c:GlyphIcon.RenderTransform>
+                    <RotateTransform x:Name="BellSwing" />
+                </c:GlyphIcon.RenderTransform>
+            </c:GlyphIcon>
             <Border x:Name="Badge" Background="{DynamicResource Accent}" CornerRadius="7" MinWidth="14" Height="14"
-                    Padding="3,0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,-4,0" Visibility="Collapsed">
+                    Padding="3,0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,-4,0" Visibility="Collapsed"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="BadgeScale" />
+                </Border.RenderTransform>
                 <TextBlock x:Name="BadgeText" Foreground="{DynamicResource OnAccent}" FontSize="9.5" FontWeight="SemiBold"
                            LineStackingStrategy="BlockLineHeight" LineHeight="14"
                            HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
