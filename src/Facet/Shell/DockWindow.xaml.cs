@@ -363,6 +363,13 @@ public partial class DockWindow : Window
 
     private void Slide(double to, double ms, IEasingFunction ease, Action? done)
     {
+        if (!Motion.Enabled)
+        {
+            BeginAnimation(TopProperty, null);
+            Top = to;
+            done?.Invoke();
+            return;
+        }
         _animating = true;
         var anim = new DoubleAnimation(to, TimeSpan.FromMilliseconds(ms)) { EasingFunction = ease };
         anim.Completed += (_, _) =>

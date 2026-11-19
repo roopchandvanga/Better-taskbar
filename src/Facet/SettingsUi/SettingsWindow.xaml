@@ -88,6 +88,14 @@
                         <CheckBox x:Name="Clock24" Style="{StaticResource Switch}" Content="24-hour clock" Click="Changed" />
                     </Border>
                     <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="Animations" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Animations" FontWeight="SemiBold" />
+                                <TextBlock Text="Motion when panels open, apps switch and icons are hovered. They're also off whenever Windows' own &quot;Animation effects&quot; setting is off." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+                    <Border Style="{StaticResource Row}">
                         <CheckBox x:Name="ShowNotifications" Style="{StaticResource Switch}" Click="Changed">
                             <StackPanel>
                                 <TextBlock Text="Notifications button" FontWeight="SemiBold" />

@@ -170,8 +170,7 @@ public partial class ConnectWidget : UserControl
     private void OnPopoverChanged()
     {
         var open = PopoverWindow.IsOpenFor(Btn);
-        ExpandTurn.BeginAnimation(RotateTransform.AngleProperty,
-            new DoubleAnimation(open ? 180 : 0, TimeSpan.FromMilliseconds(180)) { EasingFunction = new CubicEase() });
+        Motion.To(ExpandTurn, RotateTransform.AngleProperty, open ? 180 : 0, 180, Motion.EaseInOut);
     }
 
     private void Network_Click(object sender, RoutedEventArgs e) => AppServices.Connectivity.OpenNetworkList();

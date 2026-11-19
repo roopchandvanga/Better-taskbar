@@ -191,6 +191,7 @@ public partial class SettingsWindow : Window
     {
         Clock24.IsChecked = S.Clock24;
         ShowNotifications.IsChecked = S.ShowNotifications;
+        Animations.IsChecked = S.Animations;
         AutoHide.IsChecked = S.AutoHide;
         HideTaskbar.IsChecked = S.HideTaskbar;
         ReserveSpace.IsChecked = S.ReserveSpace;
@@ -211,6 +212,7 @@ public partial class SettingsWindow : Window
         if (_loading) return;
         S.Clock24 = Clock24.IsChecked == true;
         S.ShowNotifications = ShowNotifications.IsChecked == true;
+        S.Animations = Animations.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;
         S.HideTaskbar = HideTaskbar.IsChecked == true;
         S.ReserveSpace = ReserveSpace.IsChecked == true;

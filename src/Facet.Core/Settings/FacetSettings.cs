@@ -75,6 +75,8 @@ public sealed class FacetSettings
     public bool Clock24 { get; set; }
     /// <summary>The bell at the dock's far right that opens Windows' notification center.</summary>
     public bool ShowNotifications { get; set; } = true;
+    /// <summary>Facet's motion (also off whenever Windows' "Animation effects" is off).</summary>
+    public bool Animations { get; set; } = true;
 
     // Behaviour
     /// <summary>Tuck the dock away and slide it in when the cursor touches the screen edge.</summary>

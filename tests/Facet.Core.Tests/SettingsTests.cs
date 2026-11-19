@@ -28,6 +28,7 @@ public class SettingsTests : IDisposable
         var loaded = JsonStore.Load<FacetSettings>(path);
         Assert.Equal(DockTheme.Black, loaded.Theme);
         Assert.True(loaded.ShowNotifications);
+        Assert.True(loaded.Animations);
     }
 
     [Fact]
