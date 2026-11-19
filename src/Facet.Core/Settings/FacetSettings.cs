@@ -83,6 +83,8 @@ public sealed class FacetSettings
     public bool Animations { get; set; } = true;
     /// <summary>Icons near the cursor grow, macOS-style (off: only the hovered icon grows a little).</summary>
     public bool Magnify { get; set; } = true;
+    /// <summary>Resting on a running app shows live previews of its windows.</summary>
+    public bool WindowPreviews { get; set; } = true;
 
     // Behaviour
     /// <summary>Tuck the dock away and slide it in when the cursor touches the screen edge.</summary>

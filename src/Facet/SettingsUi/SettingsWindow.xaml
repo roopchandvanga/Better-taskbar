@@ -120,6 +120,14 @@
                         </CheckBox>
                     </Border>
                     <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="WindowPreviews" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Window previews" FontWeight="SemiBold" />
+                                <TextBlock Text="Rest the pointer on a running app to see live previews of its windows. Click one to switch to it; × closes it." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+                    <Border Style="{StaticResource Row}">
                         <CheckBox x:Name="ShowNotifications" Style="{StaticResource Switch}" Click="Changed">
                             <StackPanel>
                                 <TextBlock Text="Notifications button" FontWeight="SemiBold" />

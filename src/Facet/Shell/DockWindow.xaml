@@ -52,6 +52,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type apps:AppItem}">
                             <Button Style="{StaticResource AppButton}" ToolTip="{Binding Tooltip}" Click="App_Click"
+                                    MouseEnter="App_MouseEnter" MouseLeave="App_MouseLeave"
                                     PreviewMouseUp="App_PreviewMouseUp" MouseRightButtonUp="App_RightClick"
                                     AllowDrop="True" DragEnter="App_DragEnter" DragOver="App_DragOver"
                                     DragLeave="App_DragLeave" Drop="App_Drop" />

@@ -74,6 +74,8 @@ public partial class DockWindow : Window
         ClockHost.Content = _clock;
         NotificationsHost.Content = _bell;
 
+        _previewDelay.Tick += (_, _) => OnPreviewDelay();
+        _previewWatch.Tick += (_, _) => WatchPreview();
         _watchdog.Tick += (_, _) => Watchdog();
         _taskbarGuard.Tick += (_, _) => AppServices.Taskbar.Enforce();
         _autoHide.Tick += (_, _) => AutoHideTick();
@@ -309,7 +311,7 @@ public partial class DockWindow : Window
         var pad = (int)(12 * Scale);
         var overDock = p.X >= r.Left - pad && p.X <= r.Right + pad
                        && (s.Edge == DockEdge.Top ? p.Y <= r.Bottom + pad : p.Y >= r.Top - pad);
-        var busy = startOpen || PopoverWindow.IsOpen || CommandPalette.IsOpen || Mouse.Captured is not null;
+        var busy = startOpen || PopoverWindow.IsOpen || WindowPreview.IsOpen || CommandPalette.IsOpen || Mouse.Captured is not null;
         if (overDock || atEdge || busy)
         {
             _leftAt = DateTime.MaxValue;
@@ -357,6 +359,7 @@ public partial class DockWindow : Window
     {
         if (_concealed) return;
         _concealed = true;
+        HidePreview();
         Slide(_restTop + SlideOffset(), ConcealMs, new CubicEase { EasingMode = EasingMode.EaseIn }, () =>
         {
             ApplyVisibility();
@@ -543,7 +546,79 @@ public partial class DockWindow : Window
 
     private void App_Click(object sender, RoutedEventArgs e)
     {
+        HidePreview();
         if ((sender as FrameworkElement)?.DataContext is AppItem item) AppServices.Apps.Click(item);
+    }
+
+    // ───────────────────────── window previews ─────────────────────────
+
+    private readonly DispatcherTimer _previewDelay = new() { Interval = TimeSpan.FromMilliseconds(450) };
+    private readonly DispatcherTimer _previewWatch = new() { Interval = TimeSpan.FromMilliseconds(120) };
+    private (AppItem Item, FrameworkElement Anchor)? _previewPending;
+    private int _previewAway;
+
+    /// <summary>Resting on a running app's icon shows live previews of its windows; moving on switches them.</summary>
+    private void App_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is not FrameworkElement button || button.DataContext is not AppItem item) return;
+        var previews = AppServices.Settings.Current.WindowPreviews;
+        // the preview names the windows; the title tooltip would only cover it
+        ToolTipService.SetIsEnabled(button, !(previews && item.IsRunning));
+        _previewPending = null;
+        if (!previews || !item.IsRunning || item.IsLeaving || _dragItem is not null || e.LeftButton == MouseButtonState.Pressed) return;
+        if (WindowPreview.IsOpen)
+        {
+            ShowPreview(item, button); // already browsing previews: switch at once
+            return;
+        }
+        _previewPending = (item, button);
+        _previewDelay.Stop();
+        _previewDelay.Start();
+    }
+
+    private void App_MouseLeave(object sender, MouseEventArgs e)
+    {
+        _previewDelay.Stop();
+        _previewPending = null;
+    }
+
+    private void OnPreviewDelay()
+    {
+        _previewDelay.Stop();
+        if (_previewPending is { } p && p.Anchor.IsMouseOver && Mouse.Captured is null) ShowPreview(p.Item, p.Anchor);
+        _previewPending = null;
+    }
+
+    private void ShowPreview(AppItem item, FrameworkElement anchor)
+    {
+        WindowPreview.ShowFor(item, anchor);
+        _previewAway = 0;
+        _previewWatch.Start();
+    }
+
+    private void HidePreview()
+    {
+        _previewDelay.Stop();
+        _previewPending = null;
+        _previewWatch.Stop();
+        WindowPreview.HideCurrent();
+    }
+
+    /// <summary>Keep the preview while the cursor is on it or on the dock's icons; close it shortly after it leaves both.</summary>
+    private void WatchPreview()
+    {
+        if (!WindowPreview.IsOpen)
+        {
+            _previewWatch.Stop();
+            return;
+        }
+        Native.GetCursorPos(out var p);
+        if (WindowPreview.Contains(p) || AppArea.IsMouseOver)
+        {
+            _previewAway = 0;
+            return;
+        }
+        if (++_previewAway >= 3) HidePreview(); // ~⅓ s of grace to cross the gap between icon and preview
     }
 
     private void App_PreviewMouseUp(object sender, MouseButtonEventArgs e)
@@ -555,6 +630,7 @@ public partial class DockWindow : Window
 
     private void App_RightClick(object sender, MouseButtonEventArgs e)
     {
+        HidePreview();
         if ((sender as FrameworkElement)?.DataContext is not AppItem item) return;
         var menu = new ContextMenu { PlacementTarget = (UIElement)sender, Placement = System.Windows.Controls.Primitives.PlacementMode.Top };
 

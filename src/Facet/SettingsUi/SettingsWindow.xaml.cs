@@ -198,6 +198,7 @@ public partial class SettingsWindow : Window
         ShowNotifications.IsChecked = S.ShowNotifications;
         Animations.IsChecked = S.Animations;
         Magnify.IsChecked = S.Magnify;
+        WindowPreviews.IsChecked = S.WindowPreviews;
         MatchWindowsMode.IsChecked = S.MatchWindowsMode;
         WindowsAccent.IsChecked = S.WindowsAccent;
         AutoHide.IsChecked = S.AutoHide;
@@ -222,6 +223,7 @@ public partial class SettingsWindow : Window
         S.ShowNotifications = ShowNotifications.IsChecked == true;
         S.Animations = Animations.IsChecked == true;
         S.Magnify = Magnify.IsChecked == true;
+        S.WindowPreviews = WindowPreviews.IsChecked == true;
         S.MatchWindowsMode = MatchWindowsMode.IsChecked == true;
         S.WindowsAccent = WindowsAccent.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;
