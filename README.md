@@ -92,21 +92,6 @@ Everything lives in `%AppData%\Facet\`: `settings.json`, `events.json`, `todos.j
 
 **Privacy:** nothing leaves your PC except weather requests to Open-Meteo (MET Norway as a fallback) and the iCal / custom-widget URLs you add. Notification previews are read locally through Windows' notification API, which needs Settings → Privacy → Notifications to allow apps access; without it the bell still opens the notification center.
 
-## Compared with lumabar
-
-| | lumabar | Facet |
-|---|---|---|
-| Price / source | $5.99 licence, closed | Free and open source |
-| Runtime | — | Native WPF, no browser engine |
-| Glass | Bends the wallpaper only | Live compositor blur of whatever is behind the dock, including app windows |
-| Popovers | Custom | Real Windows 11 acrylic |
-| First launch | Sample data until accounts are connected | Real data immediately (system, media, weather via Windows location or city) |
-| Keyboard | — | Command palette with math, commands, todos, folders |
-| Long-tail widgets | Wait for the developer | Build your own from a command or URL |
-| Taskbar safety | Restored on quit | Restored on quit, by crash handlers *and* at the next launch if the process was killed |
-| Screen space | Overlaps maximised windows | With auto-hide off, keeps its own strip so maximised windows stop at it |
-| Fullscreen | Hides | Steps aside; with auto-hide on, still reachable by holding the pointer at the edge |
-
 ## Project layout
 
 ```
