@@ -177,6 +177,14 @@
                             </StackPanel>
                         </CheckBox>
                     </Border>
+                    <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="FollowPointerDisplay" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Follow the pointer to other displays" FontWeight="SemiBold" />
+                                <TextBlock Text="With more than one display: hold the pointer at the bottom (or top) edge of another display for a moment and the dock moves there. It doesn't reserve screen space while it's away from the main display." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
 
                     <TextBlock Text="General" Style="{StaticResource SectionTitle}" />
                     <Border Style="{StaticResource Row}">

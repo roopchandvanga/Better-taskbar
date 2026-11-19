@@ -85,7 +85,9 @@ public partial class CommandPalette : Window
     private void Place()
     {
         var dpi = VisualTreeHelper.GetDpi(this);
-        var mon = Native.GetPrimaryMonitor().rcMonitor;
+        // on the display you're working on (the one with the pointer)
+        Native.GetCursorPos(out var pointer);
+        var mon = Native.TryGetMonitorInfo(Native.MonitorAt(pointer), out var info) ? info.rcMonitor : Native.GetPrimaryMonitor().rcMonitor;
         Left = mon.Left / dpi.DpiScaleX + (mon.Width / dpi.DpiScaleX - ActualWidth) / 2;
         Top = mon.Top / dpi.DpiScaleY + mon.Height / dpi.DpiScaleY * 0.2;
     }

@@ -93,6 +93,8 @@ public sealed class FacetSettings
     public bool HideTaskbar { get; set; }
     public bool ReserveSpace { get; set; }
     public bool HideInFullscreen { get; set; } = true;
+    /// <summary>With several displays: hold the pointer at another display's edge and the dock moves there.</summary>
+    public bool FollowPointerDisplay { get; set; }
     public bool PaletteHotkey { get; set; } = true;
     /// <summary>Preferred shortcut; Facet falls back to another free one if it's taken.</summary>
     public string PaletteShortcut { get; set; } = "Ctrl+Alt+Space";

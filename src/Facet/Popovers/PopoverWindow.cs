@@ -132,7 +132,10 @@ public class PopoverWindow : Window
         var dpi = VisualTreeHelper.GetDpi(_anchor);
         var origin = _anchor.PointToScreen(new Point(0, 0));
         double ax = origin.X / dpi.DpiScaleX, ay = origin.Y / dpi.DpiScaleY;
-        var monitor = Native.GetPrimaryMonitor().rcMonitor;
+        // the display the dock (and so the anchor) is on
+        var monitor = (Window.GetWindow(_anchor) is { } owner
+            ? Native.GetMonitorFor(new WindowInteropHelper(owner).Handle)
+            : Native.GetPrimaryMonitor()).rcMonitor;
         double monLeft = monitor.Left / dpi.DpiScaleX, monRight = monitor.Right / dpi.DpiScaleX;
 
         var left = ax + _anchor.ActualWidth / 2 - ActualWidth / 2;

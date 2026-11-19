@@ -160,7 +160,9 @@ public partial class DockWindow : Window
         }
         else
         {
-            _autoHide.Stop();
+            // the same tick also moves the dock to the display with the pointer, when following it
+            if (s.FollowPointerDisplay) _autoHide.Start();
+            else _autoHide.Stop();
             _concealed = false;
             ApplyVisibility();
         }
@@ -219,7 +221,8 @@ public partial class DockWindow : Window
     {
         var s = AppServices.Settings.Current;
         if (_appBar is null) return;
-        if (!s.ReserveSpace || s.AutoHide)
+        // reserving space is for the main display (a dock that moves between displays doesn't reserve)
+        if (!s.ReserveSpace || s.AutoHide || (s.FollowPointerDisplay && _monitor != IntPtr.Zero))
         {
             _appBar.Release();
             _reserved = null;
@@ -236,7 +239,7 @@ public partial class DockWindow : Window
         if (_hwnd == IntPtr.Zero || _dragging) return;
         var s = AppServices.Settings.Current;
         var scale = Scale;
-        var monitor = Native.GetPrimaryMonitor();
+        var monitor = DockMonitor();
 
         // the area the dock lives in: full monitor when the taskbar is hidden, else the work area
         var area = s.HideTaskbar ? monitor.rcMonitor : monitor.rcWork;
@@ -268,13 +271,79 @@ public partial class DockWindow : Window
 
     // ───────────────────────── auto-hide ─────────────────────────
 
+    // ───────────────────────── which display ─────────────────────────
+
+    private IntPtr _monitor;                     // HMONITOR the dock is on; Zero = the main display
+    private IntPtr _moveTarget;
+    private DateTime _moveSince = DateTime.MaxValue;
+    private const double MoveDwellMs = 300;
+
+    /// <summary>The display the dock lives on: the main one, or (following the pointer) the last one it moved to.</summary>
+    private Native.MONITORINFO DockMonitor()
+    {
+        if (AppServices.Settings.Current.FollowPointerDisplay && Native.TryGetMonitorInfo(_monitor, out var info)) return info;
+        _monitor = IntPtr.Zero; // unplugged, or not following: the main display
+        return Native.GetPrimaryMonitor();
+    }
+
+    /// <summary>
+    /// Following the pointer: hold it at the dock's edge of another display for a moment and the dock moves
+    /// there (like macOS). True while it's handling that, so the rest of the tick waits.
+    /// </summary>
+    private bool FollowPointer(Native.POINT p, DockEdge edge)
+    {
+        if (!AppServices.Settings.Current.FollowPointerDisplay) return false;
+        var under = Native.MonitorAt(p);
+        var current = _monitor == IntPtr.Zero ? Native.PrimaryMonitorHandle : _monitor;
+        if (under == current || !Native.TryGetMonitorInfo(under, out var info))
+        {
+            _moveSince = DateTime.MaxValue;
+            return false;
+        }
+        var m = info.rcMonitor;
+        var atEdge = edge == DockEdge.Top ? p.Y <= m.Top + 1 : p.Y >= m.Bottom - 2;
+        if (!atEdge)
+        {
+            _moveSince = DateTime.MaxValue;
+            return false;
+        }
+        if (_moveTarget != under || _moveSince == DateTime.MaxValue)
+        {
+            _moveTarget = under;
+            _moveSince = DateTime.Now;
+            return true;
+        }
+        if ((DateTime.Now - _moveSince).TotalMilliseconds < MoveDwellMs) return true;
+
+        _moveSince = DateTime.MaxValue;
+        MoveTo(under);
+        return true;
+    }
+
+    /// <summary>Put the dock on another display: it leaves this one and slides up on that one.</summary>
+    private void MoveTo(IntPtr monitor)
+    {
+        HidePreview();
+        PopoverWindow.CloseCurrent();
+        _monitor = monitor;
+        BeginAnimation(TopProperty, null);
+        _animating = false;
+        _concealed = true;
+        Visibility = Visibility.Hidden;
+        UpdateAppBar();
+        Reposition();
+        Reveal();
+    }
+
     private void AutoHideTick()
     {
         var s = AppServices.Settings.Current;
-        if (!s.AutoHide || _dragging || _animating || _hwnd == IntPtr.Zero) return;
+        if (_dragging || _animating || _hwnd == IntPtr.Zero) return;
 
         Native.GetCursorPos(out var p);
-        var mon = Native.GetPrimaryMonitor().rcMonitor;
+        if (FollowPointer(p, s.Edge) || !s.AutoHide) return;
+
+        var mon = DockMonitor().rcMonitor;
         var atEdge = p.X >= mon.Left && p.X < mon.Right
                      && (s.Edge == DockEdge.Top ? p.Y <= mon.Top + 1 : p.Y >= mon.Bottom - 2);
 
@@ -890,7 +959,7 @@ public partial class DockWindow : Window
         _dragging = false;
 
         Native.GetCursorPos(out var p);
-        var mon = Native.GetPrimaryMonitor().rcMonitor;
+        var mon = DockMonitor().rcMonitor;
         var edge = p.Y < mon.Top + mon.Height / 2 ? DockEdge.Top : DockEdge.Bottom;
         var s = AppServices.Settings.Current;
         if (s.Edge != edge)

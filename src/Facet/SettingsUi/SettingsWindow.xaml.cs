@@ -205,6 +205,7 @@ public partial class SettingsWindow : Window
         HideTaskbar.IsChecked = S.HideTaskbar;
         ReserveSpace.IsChecked = S.ReserveSpace;
         HideInFullscreen.IsChecked = S.HideInFullscreen;
+        FollowPointerDisplay.IsChecked = S.FollowPointerDisplay;
         LaunchAtStartup.IsChecked = S.LaunchAtStartup;
         PaletteHotkey.IsChecked = S.PaletteHotkey;
         Fahrenheit.IsChecked = S.Fahrenheit;
@@ -230,6 +231,7 @@ public partial class SettingsWindow : Window
         S.HideTaskbar = HideTaskbar.IsChecked == true;
         S.ReserveSpace = ReserveSpace.IsChecked == true;
         S.HideInFullscreen = HideInFullscreen.IsChecked == true;
+        S.FollowPointerDisplay = FollowPointerDisplay.IsChecked == true;
         S.LaunchAtStartup = LaunchAtStartup.IsChecked == true;
         S.PaletteHotkey = PaletteHotkey.IsChecked == true;
         S.Fahrenheit = Fahrenheit.IsChecked == true;

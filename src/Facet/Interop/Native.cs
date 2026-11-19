@@ -317,6 +317,18 @@ internal static class Native
         return info;
     }
 
+    /// <summary>The monitor (HMONITOR) under a screen point, or the nearest one.</summary>
+    public static IntPtr MonitorAt(POINT p) => MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST);
+
+    public static IntPtr PrimaryMonitorHandle => MonitorFromPoint(new POINT(), MONITOR_DEFAULTTOPRIMARY);
+
+    /// <summary>Info for a monitor handle; false if it's gone (unplugged).</summary>
+    public static bool TryGetMonitorInfo(IntPtr monitor, out MONITORINFO info)
+    {
+        info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+        return monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info);
+    }
+
     public static string? GetWallpaperPath()
     {
         var sb = new StringBuilder(520);
