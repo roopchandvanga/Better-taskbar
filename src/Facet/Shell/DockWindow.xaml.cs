@@ -624,9 +624,13 @@ public partial class DockWindow : Window
     private readonly DispatcherTimer _previewDelay = new() { Interval = TimeSpan.FromMilliseconds(450) };
     private readonly DispatcherTimer _previewWatch = new() { Interval = TimeSpan.FromMilliseconds(120) };
     private (AppItem Item, FrameworkElement Anchor)? _previewPending;
+    private FrameworkElement? _previewAnchor; // the icon whose windows are shown
     private int _previewAway;
 
-    /// <summary>Resting on a running app's icon shows live previews of its windows; moving on switches them.</summary>
+    /// <summary>
+    /// Resting on a running app's icon shows live previews of its windows. With a preview open, moving onto
+    /// another icon switches to that app's preview — or closes it, for an app with no windows.
+    /// </summary>
     private void App_MouseEnter(object sender, MouseEventArgs e)
     {
         if (sender is not FrameworkElement button || button.DataContext is not AppItem item) return;
@@ -634,12 +638,16 @@ public partial class DockWindow : Window
         // the preview names the windows; the title tooltip would only cover it
         ToolTipService.SetIsEnabled(button, !(previews && item.IsRunning));
         _previewPending = null;
-        if (!previews || !item.IsRunning || item.IsLeaving || _dragItem is not null || e.LeftButton == MouseButtonState.Pressed) return;
+        var canPreview = previews && item.IsRunning && !item.IsLeaving && _dragItem is null && e.LeftButton != MouseButtonState.Pressed;
+
         if (WindowPreview.IsOpen)
         {
-            ShowPreview(item, button); // already browsing previews: switch at once
+            if (ReferenceEquals(WindowPreview.ShownFor, item)) return; // back on the same app
+            if (canPreview) ShowPreview(item, button); // already browsing previews: switch at once
+            else HidePreview();                        // a pinned app that isn't running: nothing to show
             return;
         }
+        if (!canPreview) return;
         _previewPending = (item, button);
         _previewDelay.Stop();
         _previewDelay.Start();
@@ -661,6 +669,7 @@ public partial class DockWindow : Window
     private void ShowPreview(AppItem item, FrameworkElement anchor)
     {
         WindowPreview.ShowFor(item, anchor);
+        _previewAnchor = anchor;
         _previewAway = 0;
         _previewWatch.Start();
     }
@@ -670,10 +679,15 @@ public partial class DockWindow : Window
         _previewDelay.Stop();
         _previewPending = null;
         _previewWatch.Stop();
+        _previewAnchor = null;
         WindowPreview.HideCurrent();
     }
 
-    /// <summary>Keep the preview while the cursor is on it or on the dock's icons; close it shortly after it leaves both.</summary>
+    /// <summary>
+    /// Keep the preview while the pointer is on it or on its app's icon. Anywhere else — a gap, the Start
+    /// button, off the dock — it closes after a short grace (time to move from the icon up into the preview);
+    /// other app icons switch or close it right away (App_MouseEnter).
+    /// </summary>
     private void WatchPreview()
     {
         if (!WindowPreview.IsOpen)
@@ -682,12 +696,12 @@ public partial class DockWindow : Window
             return;
         }
         Native.GetCursorPos(out var p);
-        if (WindowPreview.Contains(p) || AppArea.IsMouseOver)
+        if (WindowPreview.Contains(p) || _previewAnchor?.IsMouseOver == true)
         {
             _previewAway = 0;
             return;
         }
-        if (++_previewAway >= 3) HidePreview(); // ~⅓ s of grace to cross the gap between icon and preview
+        if (++_previewAway >= 3) HidePreview(); // ~⅓ s of grace
     }
 
     private void App_PreviewMouseUp(object sender, MouseButtonEventArgs e)
