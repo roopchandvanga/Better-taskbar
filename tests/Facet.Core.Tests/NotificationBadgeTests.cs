@@ -17,6 +17,18 @@ public class NotificationBadgeTests
     public void NeverOpenedMeansEverythingIsNew() =>
         Assert.Equal(3, NotificationBadge.Unseen([Opened, Opened, Opened.AddDays(-30)], DateTimeOffset.MinValue));
 
+    [Fact]
+    public void AgoIsCompact()
+    {
+        var now = new DateTimeOffset(2026, 11, 19, 15, 0, 0, TimeZoneInfo.Local.GetUtcOffset(new DateTime(2026, 11, 19)));
+        Assert.Equal("now", NotificationBadge.Ago(now.AddSeconds(-20), now));
+        Assert.Equal("5 min", NotificationBadge.Ago(now.AddMinutes(-5), now));
+        Assert.Equal("3 h", NotificationBadge.Ago(now.AddHours(-3), now));
+        Assert.Equal("yesterday", NotificationBadge.Ago(now.AddHours(-20), now));
+        Assert.Equal("3 d", NotificationBadge.Ago(now.AddDays(-3), now));
+        Assert.Equal("Nov 2", NotificationBadge.Ago(now.AddDays(-17), now));
+    }
+
     [Theory]
     [InlineData(-1, "")]
     [InlineData(0, "")]
