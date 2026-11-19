@@ -78,7 +78,7 @@ public partial class CommandPalette : Window
     {
         base.OnSourceInitialized(e);
         Native.AddExStyle(new WindowInteropHelper(this).Handle, Native.WS_EX_TOOLWINDOW);
-        if (!Backdrop.TryApply(this, !ThemeManager.IsLightSurface(AppServices.Settings.Current.Theme)))
+        if (!Backdrop.TryApply(this, !ThemeManager.IsLightSurface(ThemeManager.Current)))
             Frame.SetResourceReference(Border.BackgroundProperty, "SurfaceSolid");
     }
 
@@ -352,15 +352,22 @@ public partial class CommandPalette : Window
             s.Edge = s.Edge == DockEdge.Bottom ? DockEdge.Top : DockEdge.Bottom;
             AppServices.Settings.Save();
         });
-        foreach (var theme in Enum.GetValues<DockTheme>().Where(t => t != s.Theme))
+        foreach (var theme in Enum.GetValues<DockTheme>().Where(t => s.MatchWindowsMode || t != s.Theme))
         {
             var t = theme;
             yield return A($"Theme: {DockWindow.ThemeLabel(t)}", "", () =>
             {
                 s.Theme = t;
+                s.MatchWindowsMode = false;
                 AppServices.Settings.Save();
             });
         }
+        if (!s.MatchWindowsMode)
+            yield return A("Theme: Match Windows light/dark", "", () =>
+            {
+                s.MatchWindowsMode = true;
+                AppServices.Settings.Save();
+            });
         yield return A("Refresh weather", "", () => _ = AppServices.Weather.RefreshAsync(force: true));
         yield return A("Downloads", "", () => AppServices.Open("shell:Downloads"));
         yield return A("Documents", "", () => AppServices.Open("shell:Personal"));

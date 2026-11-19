@@ -72,6 +72,22 @@
 
                     <TextBlock Text="Theme" Style="{StaticResource SectionTitle}" />
                     <WrapPanel x:Name="ThemeChoices" />
+                    <Border Style="{StaticResource Row}" Margin="0,4,0,0">
+                        <CheckBox x:Name="MatchWindowsMode" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Match Windows light or dark mode" FontWeight="SemiBold" />
+                                <TextBlock Text="Glass while Windows is dark, Frosted while it's light. Picking a theme above turns this off." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+                    <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="WindowsAccent" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Use the Windows accent colour" FontWeight="SemiBold" />
+                                <TextBlock Text="For the active-app line, switched-on controls and badges. Off: Facet's blue." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
 
                     <TextBlock Text="Size" Style="{StaticResource SectionTitle}" />
                     <WrapPanel x:Name="SizeChoices" />

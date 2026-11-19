@@ -16,6 +16,9 @@
 
         <!-- near-transparent over the live blur (hit-testable); the theme's solid tint if blur is unavailable -->
         <Border x:Name="GlassLayer" Background="#01000000" CornerRadius="{DynamicResource DockCorner}" />
+        <!-- rim light along the glass edge (ThemeManager.ApplyDock: DockRim) -->
+        <Border x:Name="Rim" CornerRadius="{DynamicResource DockCorner}" BorderThickness="1" BorderBrush="{DynamicResource DockRim}"
+                IsHitTestVisible="False" />
 
         <Grid x:Name="DockContent" Margin="7,6" TextElement.Foreground="{DynamicResource DockForeground}">
             <Grid.ColumnDefinitions>

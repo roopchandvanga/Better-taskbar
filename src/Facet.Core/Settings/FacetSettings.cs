@@ -73,6 +73,10 @@ public sealed class FacetSettings
     public DockSize Size { get; set; } = DockSize.Medium;
     public DockLayout Layout { get; set; } = DockLayout.Pill;
     public bool Clock24 { get; set; }
+    /// <summary>Follow Windows' light/dark mode: Glass when Windows is dark, Frosted when it's light.</summary>
+    public bool MatchWindowsMode { get; set; }
+    /// <summary>Use Windows' accent colour instead of Facet's blue.</summary>
+    public bool WindowsAccent { get; set; } = true;
     /// <summary>The bell at the dock's far right that opens Windows' notification center.</summary>
     public bool ShowNotifications { get; set; } = true;
     /// <summary>Facet's motion (also off whenever Windows' "Animation effects" is off).</summary>

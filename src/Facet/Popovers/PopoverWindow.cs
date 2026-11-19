@@ -120,7 +120,7 @@ public class PopoverWindow : Window
         base.OnSourceInitialized(e);
         var hwnd = new WindowInteropHelper(this).Handle;
         Native.AddExStyle(hwnd, Native.WS_EX_TOOLWINDOW);
-        var dark = !ThemeManager.IsLightSurface(AppServices.Settings.Current.Theme);
+        var dark = !ThemeManager.IsLightSurface(ThemeManager.Current);
         if (!Backdrop.TryApply(this, dark)) _frame.SetResourceReference(Border.BackgroundProperty, "SurfaceSolid");
     }
 

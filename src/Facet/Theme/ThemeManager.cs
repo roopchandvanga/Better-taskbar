@@ -1,6 +1,9 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using Facet.Core.Settings;
+using Microsoft.Win32;
+using Windows.UI.ViewManagement;
 
 namespace Facet.Theme;
 
@@ -67,6 +70,64 @@ internal static class ThemeManager
 
     public static bool UsesDarkText(DockTheme theme) => theme is DockTheme.Frost or DockTheme.White;
 
+    /// <summary>The theme Facet actually shows: the chosen one, or Glass / Frosted following Windows' mode.</summary>
+    public static DockTheme Effective(FacetSettings s) =>
+        !s.MatchWindowsMode ? s.Theme : WindowsIsLight() ? DockTheme.Frost : DockTheme.LiquidGlass;
+
+    /// <summary>Windows' mode for the taskbar and Start ("Choose your default Windows mode": light).</summary>
+    public static bool WindowsIsLight()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            return key?.GetValue("SystemUsesLightTheme") is int v && v != 0;
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// The accent (active-app line, switched-on tiles, badges, links): Windows' accent colour — a lighter shade
+    /// over dark surfaces, a darker one over light, as Windows itself does — or Facet's blue. Text on it is
+    /// black or white, whichever reads better.
+    /// </summary>
+    public static void ApplyAccent(bool useWindows, bool lightSurface)
+    {
+        var accent = Color.FromRgb(0x0A, 0x84, 0xFF);
+        if (useWindows && WindowsAccent(lightSurface) is { } windows) accent = windows;
+        R["Accent"] = Frozen(new SolidColorBrush(accent));
+        R["AccentSoft"] = Frozen(new SolidColorBrush(Color.FromArgb(0x33, accent.R, accent.G, accent.B)));
+        R["OnAccent"] = Frozen(new SolidColorBrush(WhiteReadsBetter(accent) ? Colors.White : Color.FromRgb(0x14, 0x14, 0x16)));
+    }
+
+    private static Color? WindowsAccent(bool lightSurface)
+    {
+        try
+        {
+            var c = new UISettings().GetColorValue(lightSurface ? UIColorType.AccentDark1 : UIColorType.AccentLight1);
+            return Color.FromRgb(c.R, c.G, c.B);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Accent colour unavailable: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>WCAG contrast: white text beats near-black on colours darker than relative luminance ~0.18.</summary>
+    internal static bool WhiteReadsBetter(Color c)
+    {
+        static double Lin(byte v)
+        {
+            var s = v / 255.0;
+            return s <= 0.04045 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
+        }
+        var l = 0.2126 * Lin(c.R) + 0.7152 * Lin(c.G) + 0.0722 * Lin(c.B);
+        return (1.05 / (l + 0.05)) >= ((l + 0.05) / 0.05);
+    }
+
     /// <summary>
     /// Tint laid over the live blur. Alpha decides how much of what's behind shows through:
     /// the glass themes are mostly see-through, the solid themes barely.
@@ -80,9 +141,13 @@ internal static class ThemeManager
         _ => Color.FromArgb(0xE8, 0xF7, 0xF7, 0xF9),
     };
 
+    /// <summary>The theme last applied to the dock (see <see cref="Effective"/>).</summary>
+    public static DockTheme Current { get; private set; } = DockTheme.LiquidGlass;
+
     /// <summary>Dock brushes for text, tiles and hover, readable on the theme's tint.</summary>
     public static void ApplyDock(DockTheme theme)
     {
+        Current = theme;
         if (UsesDarkText(theme))
         {
             Set("DockForeground", "#1C1C1E");
@@ -105,10 +170,25 @@ internal static class ThemeManager
         // used only when the compositor can't blur (e.g. transparency effects turned off)
         var tint = DockTint(theme);
         R["DockSolid"] = Frozen(new SolidColorBrush(Color.FromArgb(0xF2, tint.R, tint.G, tint.B)));
+
+        // rim light: a hairline catching light along the top edge, fading down the sides — what makes glass
+        // read as a physical pane. Brightest on the see-through themes, faint on the solid ones.
+        var (top, side) = theme switch
+        {
+            DockTheme.LiquidGlass => ((byte)0x5C, (byte)0x14),
+            DockTheme.Frost => ((byte)0xB0, (byte)0x30),
+            DockTheme.White => ((byte)0x00, (byte)0x00),
+            _ => ((byte)0x30, (byte)0x0C),
+        };
+        var rim = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(top, 255, 255, 255), 0));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb(side, 255, 255, 255), 0.45));
+        rim.GradientStops.Add(new GradientStop(Color.FromArgb((byte)(side / 2), 255, 255, 255), 1));
+        R["DockRim"] = Frozen(rim);
     }
 
     /// <summary>Popover / palette / toast surfaces. Translucent when DWM acrylic sits behind them.</summary>
-    public static void ApplySurface(DockTheme theme)
+    public static void ApplySurface(DockTheme theme, bool windowsAccent = false)
     {
         var light = theme == DockTheme.White || theme == DockTheme.Frost;
         if (light)
@@ -144,13 +224,11 @@ internal static class ThemeManager
             Set("SettingsBackground", "#FF1C1C1E");
         }
 
-        Set("Accent", "#0A84FF");
-        Set("AccentSoft", "#330A84FF");
+        ApplyAccent(windowsAccent, light);
         Set("Good", "#30D158");
         Set("Warn", "#FF9F0A");
         Set("Bad", "#FF453A");
         Set("Focus", "#FF6B5E");
-        Set("OnAccent", "#FFFFFF");
     }
 
     public static bool IsLightSurface(DockTheme theme) => theme is DockTheme.White or DockTheme.Frost;

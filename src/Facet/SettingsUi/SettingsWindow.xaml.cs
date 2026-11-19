@@ -60,7 +60,7 @@ public partial class SettingsWindow : Window
     {
         base.OnSourceInitialized(e);
         var hwnd = new WindowInteropHelper(this).Handle;
-        var dark = ThemeManager.IsLightSurface(S.Theme) ? 0 : 1;
+        var dark = ThemeManager.IsLightSurface(ThemeManager.Current) ? 0 : 1;
         Native.DwmSetWindowAttribute(hwnd, Native.DWMWA_USE_IMMERSIVE_DARK_MODE, ref dark, sizeof(int));
         var mica = 2; // DWMSBT_MAINWINDOW: Mica title bar on Windows 11
         Native.DwmSetWindowAttribute(hwnd, Native.DWMWA_SYSTEMBACKDROP_TYPE, ref mica, sizeof(int));
@@ -96,7 +96,12 @@ public partial class SettingsWindow : Window
     private void BuildChoices()
     {
         foreach (var theme in Enum.GetValues<DockTheme>())
-            ThemeChoices.Children.Add(Choice("theme", ThemeSwatch(theme), theme, () => { S.Theme = theme; Save(); }));
+            ThemeChoices.Children.Add(Choice("theme", ThemeSwatch(theme), theme, () =>
+            {
+                S.Theme = theme;
+                S.MatchWindowsMode = false; // picking a theme means this one, always
+                Save();
+            }));
         foreach (var size in Enum.GetValues<DockSize>())
             SizeChoices.Children.Add(Choice("size", new TextBlock { Text = size.ToString() }, size, () => { S.Size = size; Save(); }));
         LayoutChoices.Children.Add(Choice("layout", new TextBlock { Text = "Floating" }, DockLayout.Pill, () => { S.Layout = DockLayout.Pill; Save(); }));
@@ -192,6 +197,8 @@ public partial class SettingsWindow : Window
         Clock24.IsChecked = S.Clock24;
         ShowNotifications.IsChecked = S.ShowNotifications;
         Animations.IsChecked = S.Animations;
+        MatchWindowsMode.IsChecked = S.MatchWindowsMode;
+        WindowsAccent.IsChecked = S.WindowsAccent;
         AutoHide.IsChecked = S.AutoHide;
         HideTaskbar.IsChecked = S.HideTaskbar;
         ReserveSpace.IsChecked = S.ReserveSpace;
@@ -213,6 +220,8 @@ public partial class SettingsWindow : Window
         S.Clock24 = Clock24.IsChecked == true;
         S.ShowNotifications = ShowNotifications.IsChecked == true;
         S.Animations = Animations.IsChecked == true;
+        S.MatchWindowsMode = MatchWindowsMode.IsChecked == true;
+        S.WindowsAccent = WindowsAccent.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;
         S.HideTaskbar = HideTaskbar.IsChecked == true;
         S.ReserveSpace = ReserveSpace.IsChecked == true;

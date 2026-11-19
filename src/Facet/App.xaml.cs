@@ -72,8 +72,9 @@ public partial class App : Application
 
         var settings = AppServices.Settings.Current;
         ThemeManager.ApplySize(settings.Size);
-        ThemeManager.ApplySurface(settings.Theme);
-        ThemeManager.ApplyDock(settings.Theme);
+        var theme = ThemeManager.Effective(settings);
+        ThemeManager.ApplySurface(theme, settings.WindowsAccent);
+        ThemeManager.ApplyDock(theme);
 
         AppServices.Start();
 

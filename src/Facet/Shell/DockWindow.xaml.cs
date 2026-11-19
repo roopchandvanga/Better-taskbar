@@ -117,9 +117,10 @@ public partial class DockWindow : Window
         var s = AppServices.Settings.Current;
         ThemeManager.ApplySize(s.Size, Scale);
         AppServices.Apps.EnsureIconSize(ThemeManager.IconPixels);
-        ThemeManager.ApplySurface(s.Theme);
-        ThemeManager.ApplyDock(s.Theme);
-        ApplyGlass(s.Theme);
+        var theme = ThemeManager.Effective(s);
+        ThemeManager.ApplySurface(theme, s.WindowsAccent);
+        ThemeManager.ApplyDock(theme);
+        ApplyGlass(theme);
 
         if (s.Layout == DockLayout.FullWidth)
         {
@@ -182,7 +183,7 @@ public partial class DockWindow : Window
     {
         if (_hwnd == IntPtr.Zero) return;
         var radius = TryFindResource("DockCorner") is CornerRadius cr ? cr.TopLeft * Scale : 22;
-        _glassWindow.Match(_hwnd, IsVisible, radius, ThemeManager.DockTint(AppServices.Settings.Current.Theme));
+        _glassWindow.Match(_hwnd, IsVisible, radius, ThemeManager.DockTint(ThemeManager.Current));
     }
 
     protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
@@ -407,6 +408,9 @@ public partial class DockWindow : Window
                 var action = (uint)wParam.ToInt64();
                 if (action is Native.SPI_SETWORKAREA || action == 0)
                     Dispatcher.BeginInvoke(Reposition);
+                // Windows' light/dark mode or accent colour changed
+                if (lParam != IntPtr.Zero && System.Runtime.InteropServices.Marshal.PtrToStringUni(lParam) == "ImmersiveColorSet")
+                    Dispatcher.BeginInvoke(ApplySettings);
                 break;
             case Native.WM_DISPLAYCHANGE:
                 Dispatcher.BeginInvoke(() => { UpdateAppBar(); Reposition(); });
@@ -592,8 +596,15 @@ public partial class DockWindow : Window
         menu.Items.Add(new Separator());
 
         var theme = Submenu(menu, "Theme", "");
+        AddChoice(theme, "Match Windows (Glass / Frosted)", s.MatchWindowsMode, () => { s.MatchWindowsMode = !s.MatchWindowsMode; AppServices.Settings.Save(); });
+        theme.Items.Add(new Separator());
         foreach (var t in Enum.GetValues<DockTheme>())
-            AddChoice(theme, ThemeLabel(t), s.Theme == t, () => { s.Theme = t; AppServices.Settings.Save(); });
+            AddChoice(theme, ThemeLabel(t), !s.MatchWindowsMode && s.Theme == t, () =>
+            {
+                s.Theme = t;
+                s.MatchWindowsMode = false;
+                AppServices.Settings.Save();
+            });
 
         var size = Submenu(menu, "Size", "");
         foreach (var z in Enum.GetValues<DockSize>())
