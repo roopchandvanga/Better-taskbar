@@ -5,17 +5,36 @@ Built in C# / WPF on .NET 10. No web runtime, no account, no telemetry.
 
 ## Run it
 
+Facet runs on 64-bit Windows 10 (version 1809 or later) and Windows 11. It looks its best on Windows 11 22H2 or later; on older versions the panels are solid instead of frosted, and the bell opens the Action Center.
+
+### Build from source
+
+Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ```powershell
 dotnet build Facet.slnx -c Release
 .\src\Facet\bin\Release\net10.0-windows10.0.22621.0\Facet.exe
 ```
 
-Or publish a single-file exe (needs the .NET 10 Desktop Runtime, which Windows Update ships):
+### Make an exe to run or share
+
+Neither exe is checked into git, so a fresh clone builds one first (with the SDK above).
+
+**Standard (about 26 MB):** needs the .NET 10 Desktop Runtime on the PC that runs it. That isn't part of Windows: get it from the [.NET 10 download page](https://dotnet.microsoft.com/download/dotnet/10.0) (if it's missing, Windows says so when Facet starts and links to it).
 
 ```powershell
 dotnet publish src/Facet/Facet.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish
 .\publish\Facet.exe
 ```
+
+**Standalone (about 69 MB):** carries its own copy of .NET, so it runs on any 64-bit Windows 10/11 PC with nothing to install. Settings are in `src/Facet/Properties/PublishProfiles/Standalone.pubxml`; add `-r win-arm64` for an ARM PC.
+
+```powershell
+dotnet publish src/Facet/Facet.csproj -p:PublishProfile=Standalone
+.\publish-standalone\Facet.exe
+```
+
+An exe that arrives over the internet isn't code-signed, so Windows SmartScreen may say "Windows protected your PC": choose **More info → Run anyway**. Building it yourself avoids that.
 
 Tests (pure logic: iCal, alert rules, math, fuzzy search, JSON paths, settings):
 
