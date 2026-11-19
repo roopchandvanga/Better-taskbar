@@ -112,6 +112,14 @@
                         </CheckBox>
                     </Border>
                     <Border Style="{StaticResource Row}">
+                        <CheckBox x:Name="Magnify" Style="{StaticResource Switch}" Click="Changed">
+                            <StackPanel>
+                                <TextBlock Text="Magnify icons" FontWeight="SemiBold" />
+                                <TextBlock Text="Icons near the cursor grow and follow it, like the macOS dock. Off: only the icon you point at grows a little." Style="{StaticResource Caption}" />
+                            </StackPanel>
+                        </CheckBox>
+                    </Border>
+                    <Border Style="{StaticResource Row}">
                         <CheckBox x:Name="ShowNotifications" Style="{StaticResource Switch}" Click="Changed">
                             <StackPanel>
                                 <TextBlock Text="Notifications button" FontWeight="SemiBold" />

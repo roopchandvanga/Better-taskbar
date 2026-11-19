@@ -27,6 +27,9 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
+            <!-- Start + apps; AppStripAnimator magnifies the icons under the cursor and glides the active-app
+                 line (ActiveBar, drawn over the icons' dot row) from app to app -->
+            <Grid x:Name="AppArea">
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="StartButton" Style="{StaticResource DockButton}" Width="{DynamicResource ItemSize}" Height="{DynamicResource ItemSize}"
                         Margin="{DynamicResource AppSpacing}" Click="StartButton_Click" ToolTip="Start">
@@ -56,6 +59,11 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+            <Canvas x:Name="IndicatorLayer" IsHitTestVisible="False">
+                <Border x:Name="ActiveBar" Width="{DynamicResource BarWidth}" Height="{DynamicResource BarHeight}"
+                        CornerRadius="{DynamicResource BarRadius}" Background="{DynamicResource Accent}" />
+            </Canvas>
+            </Grid>
 
             <Border x:Name="Divider" Grid.Column="1" Width="1" Margin="8,10" Background="{DynamicResource DockDivider}" />
 

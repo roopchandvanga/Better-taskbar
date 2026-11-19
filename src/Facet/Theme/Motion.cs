@@ -24,7 +24,7 @@ internal static class Motion
     public static readonly IEasingFunction EaseIn = Frozen(new CubicEase { EasingMode = EasingMode.EaseIn });
     public static readonly IEasingFunction EaseInOut = Frozen(new CubicEase { EasingMode = EasingMode.EaseInOut });
 
-    /// <summary>A soft spring: overshoots by about 8 % and settles.</summary>
+    /// <summary>A soft spring: starts from rest, overshoots by about 5 % and settles.</summary>
     public static readonly IEasingFunction Spring = Frozen(new SpringEase());
 
     /// <summary>
@@ -61,17 +61,24 @@ internal static class Motion
         return freezable;
     }
 
-    /// <summary>Damped spring, normalised so it ends exactly at 1.</summary>
+    /// <summary>
+    /// Underdamped spring released from rest (zero starting speed): damping ratio 0.7, settling by the end of
+    /// the animation; normalised so it ends exactly at 1.
+    /// </summary>
     private sealed class SpringEase : EasingFunctionBase
     {
-        private const double Damping = 8, Frequency = 10;
-        private static readonly double End = 1 - Math.Exp(-Damping) * Math.Cos(Frequency);
+        private const double Zeta = 0.7, Omega = 7.2;
+        private static readonly double Decay = Zeta * Omega;
+        private static readonly double Damped = Omega * Math.Sqrt(1 - Zeta * Zeta);
+        private static readonly double End = Raw(1);
 
         // EaseIn: Ease(t) is EaseInCore(t) itself (the base class defaults to EaseOut, which would mirror it)
         public SpringEase() => EasingMode = EasingMode.EaseIn;
 
-        protected override double EaseInCore(double t) =>
-            (1 - Math.Exp(-Damping * t) * Math.Cos(Frequency * t)) / End;
+        private static double Raw(double t) =>
+            1 - Math.Exp(-Decay * t) * (Math.Cos(Damped * t) + Decay / Damped * Math.Sin(Damped * t));
+
+        protected override double EaseInCore(double t) => Raw(t) / End;
 
         protected override Freezable CreateInstanceCore() => new SpringEase();
     }

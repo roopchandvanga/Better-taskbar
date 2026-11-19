@@ -197,6 +197,7 @@ public partial class SettingsWindow : Window
         Clock24.IsChecked = S.Clock24;
         ShowNotifications.IsChecked = S.ShowNotifications;
         Animations.IsChecked = S.Animations;
+        Magnify.IsChecked = S.Magnify;
         MatchWindowsMode.IsChecked = S.MatchWindowsMode;
         WindowsAccent.IsChecked = S.WindowsAccent;
         AutoHide.IsChecked = S.AutoHide;
@@ -220,6 +221,7 @@ public partial class SettingsWindow : Window
         S.Clock24 = Clock24.IsChecked == true;
         S.ShowNotifications = ShowNotifications.IsChecked == true;
         S.Animations = Animations.IsChecked == true;
+        S.Magnify = Magnify.IsChecked == true;
         S.MatchWindowsMode = MatchWindowsMode.IsChecked == true;
         S.WindowsAccent = WindowsAccent.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;

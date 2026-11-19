@@ -81,6 +81,8 @@ public sealed class FacetSettings
     public bool ShowNotifications { get; set; } = true;
     /// <summary>Facet's motion (also off whenever Windows' "Animation effects" is off).</summary>
     public bool Animations { get; set; } = true;
+    /// <summary>Icons near the cursor grow, macOS-style (off: only the hovered icon grows a little).</summary>
+    public bool Magnify { get; set; } = true;
 
     // Behaviour
     /// <summary>Tuck the dock away and slide it in when the cursor touches the screen edge.</summary>

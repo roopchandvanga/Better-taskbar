@@ -32,6 +32,7 @@ public partial class DockWindow : Window
     private readonly DispatcherTimer _autoHide = new() { Interval = TimeSpan.FromMilliseconds(60) };
     private readonly ClockWidget _clock = new();
     private readonly NotificationsButton _bell = new();
+    private readonly AppStripAnimator _appMotion;
     private readonly DockGlassWindow _glassWindow = new();
     private ForegroundTracker? _foreground;
     private AppBar? _appBar;
@@ -69,6 +70,7 @@ public partial class DockWindow : Window
         LocationChanged += (_, _) => SyncGlass();
         IsVisibleChanged += (_, _) => SyncGlass();
         AppsList.ItemsSource = AppServices.Apps.Items;
+        _appMotion = new AppStripAnimator(AppArea, StartButton, StartLogo, AppsList, IndicatorLayer, ActiveBar);
         ClockHost.Content = _clock;
         NotificationsHost.Content = _bell;
 
