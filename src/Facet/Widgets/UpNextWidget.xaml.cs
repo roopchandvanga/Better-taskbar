@@ -62,6 +62,7 @@ public partial class UpNextWidget : UserControl
         DayNumber.Text = today.Day.ToString(CultureInfo.CurrentCulture);
 
         var next = AppServices.Calendar.NextEvent;
+        ShowJoin(next);
         if (next is null)
         {
             EventTitle.Text = "No more events";
@@ -77,6 +78,32 @@ public partial class UpNextWidget : UserControl
             Bar.Background = ThemeManager.Brush(next.Color ?? CalendarService.LocalColor);
             Btn.ToolTip = $"{next.Title}\n{next.Start:t} – {next.End:t}{(string.IsNullOrWhiteSpace(next.Location) ? "" : "\n" + next.Location)}";
         }
+    }
+
+    private static readonly TimeSpan JoinLead = TimeSpan.FromMinutes(10);
+    private string? _joinUrl;
+
+    /// <summary>A Join button while the next event is an online meeting about to start (or under way).</summary>
+    private void ShowJoin(Core.Calendar.CalendarEvent? next)
+    {
+        var url = next is null ? null : next.MeetingUrl ?? Core.Calendar.MeetingLink.Find(next.Location);
+        var show = url is not null && next!.Start - DateTime.Now <= JoinLead && next.End > DateTime.Now;
+        _joinUrl = show ? url : null;
+        var wasShown = JoinButton.Visibility == Visibility.Visible;
+        JoinButton.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        if (!show) return;
+        JoinButton.ToolTip = $"Join on {Core.Calendar.MeetingLink.Service(url!)}";
+        if (!wasShown && IsLoaded)
+        {
+            Motion.To(JoinScale, System.Windows.Media.ScaleTransform.ScaleXProperty, 1, Motion.Slow, Motion.Spring, from: 0.4);
+            Motion.To(JoinScale, System.Windows.Media.ScaleTransform.ScaleYProperty, 1, Motion.Slow, Motion.Spring, from: 0.4);
+        }
+    }
+
+    private void Join_Click(object sender, RoutedEventArgs e)
+    {
+        e.Handled = true; // not the tile's own click (the calendar panel)
+        if (_joinUrl is not null) AppServices.Open(_joinUrl);
     }
 
     private void Btn_Click(object sender, RoutedEventArgs e) => PopoverWindow.Toggle(Btn, () => new CalendarPanel());

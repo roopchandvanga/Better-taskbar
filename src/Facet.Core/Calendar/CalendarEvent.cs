@@ -9,4 +9,5 @@ public sealed record CalendarEvent(
     bool AllDay,
     string? Location = null,
     string Source = "local",
-    string? Color = null);
+    string? Color = null,
+    string? MeetingUrl = null);

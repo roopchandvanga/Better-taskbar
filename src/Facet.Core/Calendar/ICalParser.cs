@@ -10,6 +10,10 @@ public sealed class ICalEvent
     public string Uid { get; set; } = "";
     public string Summary { get; set; } = "";
     public string? Location { get; set; }
+    public string? Description { get; set; }
+    public string? Url { get; set; }
+    /// <summary>A dedicated join link: CONFERENCE, X-GOOGLE-CONFERENCE or X-MICROSOFT-SKYPETEAMSMEETINGURL.</summary>
+    public string? Conference { get; set; }
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
     public bool AllDay { get; set; }
@@ -20,7 +24,8 @@ public sealed class ICalEvent
 }
 
 /// <summary>
-/// Minimal RFC 5545 reader: VEVENT with SUMMARY/LOCATION/UID/DTSTART/DTEND/DURATION/RRULE/EXDATE.
+/// Minimal RFC 5545 reader: VEVENT with SUMMARY/LOCATION/DESCRIPTION/URL/UID/DTSTART/DTEND/DURATION/RRULE/EXDATE,
+/// plus the meeting-link fields CONFERENCE / X-GOOGLE-CONFERENCE / X-MICROSOFT-SKYPETEAMSMEETINGURL.
 /// RRULE supports FREQ (DAILY/WEEKLY/MONTHLY/YEARLY), INTERVAL, COUNT, UNTIL and BYDAY for WEEKLY.
 /// </summary>
 public static partial class ICalParser
@@ -71,6 +76,11 @@ public static partial class ICalParser
                     case "UID": current.Uid = value; break;
                     case "SUMMARY": current.Summary = Unescape(value); break;
                     case "LOCATION": current.Location = Unescape(value); break;
+                    case "DESCRIPTION": current.Description = Unescape(value); break;
+                    case "URL": current.Url = value.Trim(); break;
+                    case "CONFERENCE" or "X-GOOGLE-CONFERENCE" or "X-MICROSOFT-SKYPETEAMSMEETINGURL":
+                        current.Conference ??= Unescape(value).Trim();
+                        break;
                     case "DTSTART":
                         (current.Start, current.AllDay) = ParseDate(value, parameters);
                         break;
@@ -100,6 +110,7 @@ public static partial class ICalParser
         var result = new List<CalendarEvent>();
         foreach (var ev in Parse(ics))
         {
+            var meeting = MeetingLink.Find(ev.Conference, ev.Location, ev.Url, ev.Description);
             var duration = ev.End - ev.Start;
             if (duration < TimeSpan.Zero) duration = TimeSpan.Zero;
 
@@ -110,7 +121,7 @@ public static partial class ICalParser
                 var overlaps = start < to && (end > from || (duration == TimeSpan.Zero && start >= from));
                 if (!overlaps) continue;
                 var id = $"{(ev.Uid.Length > 0 ? ev.Uid : ev.Summary.GetHashCode().ToString(CultureInfo.InvariantCulture))}@{start:yyyyMMddHHmm}";
-                result.Add(new CalendarEvent(id, ev.Summary, start, end, ev.AllDay, ev.Location, source));
+                result.Add(new CalendarEvent(id, ev.Summary, start, end, ev.AllDay, ev.Location, source, MeetingUrl: meeting));
             }
         }
 

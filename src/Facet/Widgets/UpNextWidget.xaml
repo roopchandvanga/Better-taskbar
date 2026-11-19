@@ -38,6 +38,18 @@
                 <TextBlock x:Name="EventTitle" Grid.Column="1" Style="{StaticResource TileText}" />
                 <TextBlock x:Name="When" Grid.Column="1" Grid.Row="1" Style="{StaticResource TileSubText}" />
             </Grid>
+
+            <!-- the next event is an online meeting starting within 10 minutes (or under way): join it -->
+            <Button x:Name="JoinButton" Style="{StaticResource AccentPillButton}" Padding="9,4,10,4" Margin="9,0,0,0" FontSize="11.5"
+                    VerticalAlignment="Center" Visibility="Collapsed" Click="Join_Click" RenderTransformOrigin="0.5,0.5">
+                <Button.RenderTransform>
+                    <ScaleTransform x:Name="JoinScale" />
+                </Button.RenderTransform>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" Margin="0,0,5,0" />
+                    <TextBlock Text="Join" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Button>
 </UserControl>
