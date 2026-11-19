@@ -75,6 +75,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid Width="{DynamicResource ItemSize}" Height="{DynamicResource ItemSize}" Margin="{DynamicResource AppSpacing}" Background="Transparent">
+                        <!-- no hover square on app icons (they grow instead); shown only while a file is dragged over -->
                         <Border x:Name="Hover" CornerRadius="{DynamicResource TileCorner}" Background="{DynamicResource DockHover}" Opacity="0" />
                         <!-- scaled by AppStripAnimator (magnification); grows mostly upward, clear of the dot -->
                         <Image x:Name="Icon" Source="{Binding Icon}" Width="{DynamicResource IconSize}" Height="{DynamicResource IconSize}"
@@ -102,22 +103,6 @@
                         <DataTrigger Binding="{Binding IsDropTarget}" Value="True">
                             <Setter TargetName="Hover" Property="Opacity" Value="1" />
                         </DataTrigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.12" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" Duration="0:0:0.18" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Icon" Property="Opacity" Value="0.7" />
                         </Trigger>
