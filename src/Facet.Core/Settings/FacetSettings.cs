@@ -91,7 +91,6 @@ public sealed class FacetSettings
     public bool AutoHide { get; set; } = true;
     public bool LaunchAtStartup { get; set; }
     public bool HideTaskbar { get; set; }
-    public bool ReserveSpace { get; set; }
     public bool HideInFullscreen { get; set; } = true;
     /// <summary>With several displays: hold the pointer at another display's edge and the dock moves there.</summary>
     public bool FollowPointerDisplay { get; set; }

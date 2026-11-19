@@ -203,7 +203,6 @@ public partial class SettingsWindow : Window
         WindowsAccent.IsChecked = S.WindowsAccent;
         AutoHide.IsChecked = S.AutoHide;
         HideTaskbar.IsChecked = S.HideTaskbar;
-        ReserveSpace.IsChecked = S.ReserveSpace;
         HideInFullscreen.IsChecked = S.HideInFullscreen;
         FollowPointerDisplay.IsChecked = S.FollowPointerDisplay;
         LaunchAtStartup.IsChecked = S.LaunchAtStartup;
@@ -229,7 +228,6 @@ public partial class SettingsWindow : Window
         S.WindowsAccent = WindowsAccent.IsChecked == true;
         S.AutoHide = AutoHide.IsChecked == true;
         S.HideTaskbar = HideTaskbar.IsChecked == true;
-        S.ReserveSpace = ReserveSpace.IsChecked == true;
         S.HideInFullscreen = HideInFullscreen.IsChecked == true;
         S.FollowPointerDisplay = FollowPointerDisplay.IsChecked == true;
         S.LaunchAtStartup = LaunchAtStartup.IsChecked == true;

@@ -147,7 +147,7 @@
                         <CheckBox x:Name="AutoHide" Style="{StaticResource Switch}" Click="Changed">
                             <StackPanel>
                                 <TextBlock Text="Auto-hide the dock" FontWeight="SemiBold" />
-                                <TextBlock Text="The dock stays out of sight and slides up when the cursor touches the bottom edge of the screen (top edge when docked at the top)." Style="{StaticResource Caption}" />
+                                <TextBlock Text="The dock stays out of sight and slides up when the cursor touches the bottom edge of the screen (top edge when docked at the top). Off: the dock keeps its own strip at that edge, and maximized windows stop above it instead of going under it." Style="{StaticResource Caption}" />
                             </StackPanel>
                         </CheckBox>
                     </Border>
@@ -158,14 +158,6 @@
                             <StackPanel>
                                 <TextBlock Text="Hide the Windows taskbar while Facet runs" FontWeight="SemiBold" />
                                 <TextBlock Text="The Windows key still opens Start. The taskbar comes back when you quit Facet — and Facet restores it at the next launch if it ever exits unexpectedly." Style="{StaticResource Caption}" />
-                            </StackPanel>
-                        </CheckBox>
-                    </Border>
-                    <Border Style="{StaticResource Row}">
-                        <CheckBox x:Name="ReserveSpace" Style="{StaticResource Switch}" Click="Changed">
-                            <StackPanel>
-                                <TextBlock Text="Reserve screen space" FontWeight="SemiBold" />
-                                <TextBlock Text="Maximized windows stop at the dock instead of sliding under it." Style="{StaticResource Caption}" />
                             </StackPanel>
                         </CheckBox>
                     </Border>

@@ -34,7 +34,7 @@ dotnet test tests/Facet.Core.Tests
 - **Windows key:** pressing Win (Start or Search opening) brings the dock up too; it tucks away again once Start closes.
 - **Themes:** Glass (dark, most see-through), Frosted (light), Midnight, Black, White · sizes S/M/L · floating or full width · bottom or top (drag the dock to switch).
 - **Several displays:** optionally (Settings → Dock & taskbar), hold the pointer at another display's bottom edge and the dock moves there.
-- **Auto-hide (on by default):** the dock stays out of sight and slides up when the cursor touches the bottom edge (top edge when docked at the top); it stays up while you're on it or one of its panels is open. Pair it with *Hide Windows taskbar* for a macOS-style setup.
+- **Auto-hide (on by default):** the dock stays out of sight and slides up when the cursor touches the bottom edge (top edge when docked at the top); it stays up while you're on it or one of its panels is open. Pair it with *Hide Windows taskbar* for a macOS-style setup. With auto-hide off, the dock reserves its strip of the screen and maximized windows stop above it.
 - **Calendar popover:** month grid with event dots, agenda, quick add, read-only iCal subscriptions (Google / Outlook / iCloud) every 15 min.
 - **Smart alerts:** "Design review starts in 4 min — Pause music", low battery, CPU running hot, Pomodoro done. Quiet hours and focus sessions hold alerts until they matter.
 - **Command palette** (`Ctrl+Alt+Space`, or the first free fallback such as `Win+Alt+Space`): apps, dock actions, `=` math, `>` shell commands, `todo …`, folders, URLs, `?` web search.
@@ -52,7 +52,7 @@ dotnet test tests/Facet.Core.Tests
 | Keyboard | — | Command palette with math, commands, todos, folders |
 | Long-tail widgets | Wait for the developer | Build your own from a command or URL |
 | Taskbar safety | Restored on quit | Restored on quit, crash handlers *and* next launch if the process was killed |
-| Screen space | Overlaps maximised windows | Optional AppBar reservation so windows stop at the dock |
+| Screen space | Overlaps maximised windows | With auto-hide off, the dock keeps its own strip of the screen (an AppBar, like the taskbar), so maximised windows stop at it |
 | Fullscreen | Hides | Auto-hide: still reachable in fullscreen apps by holding the cursor at the edge ~0.35 s (like macOS); exclusive-fullscreen games are left alone. Always-visible mode steps aside for fullscreen apps; maximized windows keep the dock |
 | Auto-hide | — | macOS-style reveal at the screen edge |
 | Portability | — | Export / import settings as JSON |
