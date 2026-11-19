@@ -614,30 +614,38 @@
         </Setter>
     </Style>
 
+    <theme:ToolTipFormatter x:Key="ToolTipFormat" />
     <Style TargetType="ToolTip">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="HasDropShadow" Value="False" />
         <Setter Property="Foreground" Value="{DynamicResource MenuForeground}" />
         <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Placement" Value="Top" />
-        <Setter Property="VerticalOffset" Value="-6" />
+        <!-- centred on the element, above it (below when there's no room above) -->
+        <Setter Property="Placement" Value="Custom" />
+        <Setter Property="CustomPopupPlacementCallback" Value="{x:Static theme:ToolTips.Centered}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Border Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource SurfaceBorder}" BorderThickness="1"
-                            CornerRadius="8" Padding="9,5" Margin="6" MaxWidth="360">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.3" />
-                        </Border.Effect>
-                        <ContentPresenter>
-                            <ContentPresenter.Resources>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="TextWrapping" Value="Wrap" />
-                                </Style>
-                            </ContentPresenter.Resources>
-                        </ContentPresenter>
-                    </Border>
+                    <!-- the margin is room for the soft shadow; the shadow is its own layer, so the text isn't
+                         rendered through the effect and stays sharp -->
+                    <Grid Margin="12,8,12,14" MaxWidth="340" theme:Motion.AppearOnLoad="True">
+                        <Border CornerRadius="10" Background="{DynamicResource MenuBackground}">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="18" ShadowDepth="4" Direction="270" Opacity="0.3" />
+                            </Border.Effect>
+                        </Border>
+                        <Border CornerRadius="10" Background="{DynamicResource MenuBackground}" BorderBrush="{DynamicResource SurfaceBorder}"
+                                BorderThickness="1" Padding="11,7,11,8">
+                            <ContentPresenter Content="{Binding Content, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ToolTipFormat}}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                        </Border>
+                    </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

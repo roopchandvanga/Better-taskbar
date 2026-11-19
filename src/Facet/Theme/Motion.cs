@@ -115,6 +115,30 @@ internal static class Motion
         tile.Unchecked += (_, _) => Show(animate: tile.IsLoaded);
     }
 
+    /// <summary>Each time the element is loaded (e.g. a tooltip opening): fade in and grow from 96 %.</summary>
+    public static readonly DependencyProperty AppearOnLoadProperty = DependencyProperty.RegisterAttached("AppearOnLoad",
+        typeof(bool), typeof(Motion), new PropertyMetadata(false, OnAppearOnLoadChanged));
+
+    public static bool GetAppearOnLoad(DependencyObject d) => (bool)d.GetValue(AppearOnLoadProperty);
+    public static void SetAppearOnLoad(DependencyObject d, bool value) => d.SetValue(AppearOnLoadProperty, value);
+
+    private static void OnAppearOnLoadChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not FrameworkElement element || e.NewValue is not true) return;
+        element.Loaded += (_, _) =>
+        {
+            if (!Enabled) return;
+            if (element.RenderTransform is not System.Windows.Media.ScaleTransform grow || grow.IsFrozen)
+            {
+                element.RenderTransform = grow = new System.Windows.Media.ScaleTransform(1, 1);
+                element.RenderTransformOrigin = new Point(0.5, 0.5);
+            }
+            To(element, UIElement.OpacityProperty, 1, Fast, EaseOut, from: 0);
+            To(grow, System.Windows.Media.ScaleTransform.ScaleXProperty, 1, Normal, EaseOut, from: 0.96);
+            To(grow, System.Windows.Media.ScaleTransform.ScaleYProperty, 1, Normal, EaseOut, from: 0.96);
+        };
+    }
+
     private static T Frozen<T>(T freezable) where T : Freezable
     {
         freezable.Freeze();
