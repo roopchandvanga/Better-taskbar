@@ -1,0 +1,49 @@
+<UserControl x:Class="Facet.Widgets.ConnectWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Facet.Controls">
+    <!-- The quick controls tile. Every button it can show is declared here, tagged with its id; the tile keeps
+         the ones turned on in Settings.ConnectItems, in that order (right-click the tile, or Settings → Widgets).
+         The tile's empty area opens the same panel as the expand button. Every button is an IconButton
+         (no hover circle; the icon grows slightly on hover), its icon ink-centred on the tile's centre line. -->
+    <Button x:Name="Btn" Style="{StaticResource TileButton}" Padding="3,0,3,0" Click="Btn_Click" MouseRightButtonUp="Tile_RightClick">
+        <StackPanel x:Name="Items" Orientation="Horizontal">
+            <Button x:Name="Network" Tag="network" Style="{StaticResource IconButton}" Width="{DynamicResource GaugeSize}" Click="Network_Click">
+                <Grid>
+                    <c:Gauge x:Name="NetworkRing" Width="{DynamicResource GaugeSize}" Height="{DynamicResource GaugeSize}" WarnAt="20" />
+                    <c:GlyphIcon x:Name="NetworkGlyph" FontSize="15" />
+                </Grid>
+            </Button>
+            <Button x:Name="Battery" Tag="battery" Style="{StaticResource IconButton}" Width="{DynamicResource GaugeSize}" Click="Battery_Click">
+                <c:Gauge x:Name="BatteryRing" Width="{DynamicResource GaugeSize}" Height="{DynamicResource GaugeSize}" WarnAt="20" />
+            </Button>
+            <Button x:Name="Bluetooth" Tag="bluetooth" Style="{StaticResource IconButton}" Click="Bluetooth_Click">
+                <c:GlyphIcon x:Name="BluetoothGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Project" Tag="project" Style="{StaticResource IconButton}" Click="Project_Click"
+                    ToolTip="Project to a second screen · same as Win+P">
+                <c:GlyphIcon x:Name="ProjectGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Volume" Tag="volume" Style="{StaticResource IconButton}" Click="Volume_Click" MouseWheel="Volume_Wheel">
+                <c:GlyphIcon x:Name="VolumeGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Mic" Tag="mic" Style="{StaticResource IconButton}" Click="Mic_Click">
+                <c:GlyphIcon x:Name="MicGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Dnd" Tag="dnd" Style="{StaticResource IconButton}" Click="Dnd_Click">
+                <c:GlyphIcon x:Name="DndGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Screenshot" Tag="screenshot" Style="{StaticResource IconButton}" Click="Screenshot_Click"
+                    ToolTip="Screenshot · snip part of the screen (Win+Shift+S)">
+                <c:GlyphIcon x:Name="ScreenshotGlyph" FontSize="14" />
+            </Button>
+            <Button x:Name="Expand" Tag="expand" Style="{StaticResource IconButton}"
+                    ToolTip="Volume, microphone, do not disturb and more" RenderTransformOrigin="0.5,0.5">
+                <Button.RenderTransform>
+                    <RotateTransform x:Name="ExpandTurn" />
+                </Button.RenderTransform>
+                <c:GlyphIcon x:Name="ExpandGlyph" FontSize="11" />
+            </Button>
+        </StackPanel>
+    </Button>
+</UserControl>

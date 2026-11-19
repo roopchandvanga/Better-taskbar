@@ -1,0 +1,55 @@
+<UserControl x:Class="Facet.Popovers.CalendarPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Width="712">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="16" />
+            <ColumnDefinition Width="272" />
+        </Grid.ColumnDefinitions>
+
+        <!-- month -->
+        <StackPanel>
+            <DockPanel Margin="2,0,0,4">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Style="{StaticResource PillButton}" Content="Today" Padding="12,5" Click="Today_Click" Margin="0,0,6,0" />
+                    <Button Style="{StaticResource SurfaceGlyphButton}" Content="&#xE76B;" Click="Prev_Click" ToolTip="Previous month" />
+                    <Button Style="{StaticResource SurfaceGlyphButton}" Content="&#xE76C;" Click="Next_Click" ToolTip="Next month" />
+                </StackPanel>
+                <TextBlock x:Name="MonthTitle" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" />
+            </DockPanel>
+            <WrapPanel x:Name="Legend" Margin="2,2,0,10" />
+            <UniformGrid x:Name="WeekdayHeader" Columns="7" Margin="0,0,0,6" />
+            <UniformGrid x:Name="DayGrid" Columns="7" Rows="6" />
+            <TextBlock x:Name="SyncStatus" Style="{StaticResource Caption}" Margin="2,10,0,0" FontSize="11" />
+        </StackPanel>
+
+        <!-- agenda -->
+        <Border Grid.Column="2" Background="{DynamicResource SurfaceCard}" CornerRadius="16" Padding="14,14,14,12">
+            <DockPanel>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <TextBlock x:Name="AgendaCount" DockPanel.Dock="Right" Style="{StaticResource Caption}" VerticalAlignment="Center" />
+                    <TextBlock x:Name="AgendaTitle" FontSize="15" FontWeight="SemiBold" />
+                </DockPanel>
+
+                <Grid DockPanel.Dock="Bottom" Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="66" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="NewTime" Style="{StaticResource SurfaceTextBox}" Tag="09:00" Padding="7,6" />
+                    <TextBox x:Name="NewTitle" Grid.Column="2" Style="{StaticResource SurfaceTextBox}" Tag="New event…" KeyDown="NewTitle_KeyDown" />
+                    <Button Grid.Column="4" Style="{StaticResource SurfaceGlyphButton}" Content="&#xE710;" Background="{DynamicResource Accent}"
+                            Foreground="White" Click="Add_Click" ToolTip="Add event" />
+                </Grid>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="300">
+                    <StackPanel x:Name="AgendaList" />
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+    </Grid>
+</UserControl>

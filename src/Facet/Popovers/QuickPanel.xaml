@@ -1,0 +1,75 @@
+<UserControl x:Class="Facet.Popovers.QuickPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- opened by the dock's expand button (and the connect tile): volume on top, then toggles -->
+    <StackPanel Width="324">
+        <Border Style="{StaticResource Card}" Padding="8,8,14,8">
+            <DockPanel>
+                <TextBlock x:Name="VolumeValue" DockPanel.Dock="Right" Width="38" TextAlignment="Right" VerticalAlignment="Center" FontWeight="SemiBold" />
+                <Button x:Name="MuteButton" DockPanel.Dock="Left" Style="{StaticResource SurfaceGlyphButton}" FontSize="16" Click="Mute_Click" ToolTip="Mute" />
+                <Slider x:Name="VolumeSlider" Style="{StaticResource SurfaceSlider}" Minimum="0" Maximum="100" Margin="8,0,8,0"
+                        VerticalAlignment="Center" ValueChanged="Volume_Changed" />
+            </DockPanel>
+        </Border>
+
+        <UniformGrid Columns="2" Margin="-4,0,-4,4">
+            <CheckBox x:Name="MicTile" Style="{StaticResource ControlTile}" Margin="4" Click="Mic_Click">
+                <StackPanel>
+                    <TextBlock Text="Microphone" Style="{StaticResource TileTitle}" />
+                    <TextBlock x:Name="MicState" Style="{StaticResource TileState}" />
+                </StackPanel>
+            </CheckBox>
+            <CheckBox x:Name="DndTile" Style="{StaticResource ControlTile}" Margin="4" Tag="&#xE708;" Click="Dnd_Click"
+                      ToolTip="Hold Facet alerts until you turn this off">
+                <StackPanel>
+                    <TextBlock Text="Do not disturb" Style="{StaticResource TileTitle}" />
+                    <TextBlock x:Name="DndState" Style="{StaticResource TileState}" />
+                </StackPanel>
+            </CheckBox>
+            <!-- the tile switches Wi-Fi; its ">" end opens Windows' list of Wi-Fi networks -->
+            <CheckBox x:Name="WifiTile" Style="{StaticResource ControlTile}" Margin="4" Tag="&#xE701;" Click="Wifi_Click">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource TileChevron}" Click="WifiNetworks_Click"
+                            ToolTip="Wi-Fi networks" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Wi-Fi" Style="{StaticResource TileTitle}" />
+                        <TextBlock x:Name="WifiState" Style="{StaticResource TileState}" />
+                    </StackPanel>
+                </DockPanel>
+            </CheckBox>
+            <!-- the tile switches Bluetooth; its ">" end opens Windows' Bluetooth device list -->
+            <CheckBox x:Name="BluetoothTile" Style="{StaticResource ControlTile}" Margin="4" Tag="&#xE702;" Click="Bluetooth_Click">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource TileChevron}" Click="BluetoothDevices_Click"
+                            ToolTip="Bluetooth devices" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Bluetooth" Style="{StaticResource TileTitle}" />
+                        <TextBlock x:Name="BluetoothState" Style="{StaticResource TileState}" />
+                    </StackPanel>
+                </DockPanel>
+            </CheckBox>
+            <CheckBox x:Name="ProjectTile" Style="{StaticResource ControlTile}" Margin="4" Tag="&#xEBC6;" Click="Project_Click"
+                      ToolTip="Duplicate or extend to another screen (Win+P)">
+                <StackPanel>
+                    <TextBlock Text="Project" Style="{StaticResource TileTitle}" />
+                    <TextBlock Text="Second screen" Style="{StaticResource TileState}" />
+                </StackPanel>
+            </CheckBox>
+            <CheckBox x:Name="BatteryTile" Style="{StaticResource ControlTile}" Margin="4" Click="Battery_Click" ToolTip="Power &amp; battery settings">
+                <StackPanel>
+                    <TextBlock Text="Battery" Style="{StaticResource TileTitle}" />
+                    <TextBlock x:Name="BatteryState" Style="{StaticResource TileState}" />
+                </StackPanel>
+            </CheckBox>
+        </UniformGrid>
+
+        <DockPanel Margin="2,4,2,0">
+            <Button DockPanel.Dock="Right" Style="{StaticResource LinkButton}" Content="Facet settings" Click="FacetSettings_Click" />
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource LinkButton}" Content="Network" Click="Network_Click" />
+                <Button Style="{StaticResource LinkButton}" Content="Bluetooth" Click="BluetoothSettings_Click" Margin="14,0,0,0" />
+                <Button Style="{StaticResource LinkButton}" Content="Sound" Click="Sound_Click" Margin="14,0,0,0" />
+            </StackPanel>
+        </DockPanel>
+    </StackPanel>
+</UserControl>

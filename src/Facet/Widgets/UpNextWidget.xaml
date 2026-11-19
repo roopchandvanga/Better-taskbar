@@ -1,0 +1,43 @@
+<UserControl x:Class="Facet.Widgets.UpNextWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Button x:Name="Btn" Style="{StaticResource TileButton}" Padding="6,0,12,0" Click="Btn_Click">
+        <StackPanel Orientation="Horizontal">
+            <!-- the Windows Calendar app's icon (falls back to a drawn calendar page if it isn't installed) -->
+            <Image x:Name="CalendarAppIcon" Width="{DynamicResource IconSize}" Height="{DynamicResource IconSize}"
+                   VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" Visibility="Collapsed" />
+            <Border x:Name="MiniCalendar" Width="{DynamicResource ThumbSize}" Height="{DynamicResource ThumbSize}" CornerRadius="8" Background="White" VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="4" ShadowDepth="1" Opacity="0.18" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Border Background="#FF3B30" CornerRadius="8,8,0,0" Height="10">
+                        <TextBlock x:Name="Dow" FontSize="7" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock x:Name="DayNumber" Grid.Row="1" FontSize="15" FontWeight="Bold" Foreground="#1C1C1E"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- title and time share one left edge; the calendar-colour bar spans both lines beside them and
+                 collapses (taking its gap with it) when there's no upcoming event -->
+            <Grid Margin="9,0,0,0" VerticalAlignment="Center" MaxWidth="180">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Border x:Name="Bar" Grid.RowSpan="2" Width="3" CornerRadius="1.5" Background="#FF9F0A" Margin="0,2,7,2" />
+                <TextBlock x:Name="EventTitle" Grid.Column="1" Style="{StaticResource TileText}" />
+                <TextBlock x:Name="When" Grid.Column="1" Grid.Row="1" Style="{StaticResource TileSubText}" />
+            </Grid>
+        </StackPanel>
+    </Button>
+</UserControl>

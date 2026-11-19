@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Facet.Core/Facet.Core.csproj" />
+    <Project Path="src/Facet/Facet.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Facet.Core.Tests/Facet.Core.Tests.csproj" />
+  </Folder>
+</Solution>

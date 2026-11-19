@@ -1,0 +1,12 @@
+<UserControl x:Class="Facet.Widgets.ClockWidget"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- a transparent tile (it shows only on hover), spaced like the widgets beside it -->
+    <Button x:Name="Btn" Style="{StaticResource PlainTileButton}" Click="Btn_Click">
+        <StackPanel VerticalAlignment="Center">
+            <TextBlock x:Name="Time" Style="{StaticResource TileText}" FontSize="{DynamicResource DockBigFont}" HorizontalAlignment="Right"
+                       Typography.NumeralAlignment="Tabular" />
+            <TextBlock x:Name="Date" Style="{StaticResource TileSubText}" HorizontalAlignment="Right" />
+        </StackPanel>
+    </Button>
+</UserControl>

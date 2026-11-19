@@ -1,0 +1,21 @@
+<UserControl x:Class="Facet.Widgets.NotificationsButton"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Facet.Controls">
+    <!-- The bell at the dock's far right, after the clock: opens Windows' notification center (Win+N). The badge
+         counts notifications that arrived since it was last opened from here; the bell is struck through while
+         Windows' do not disturb is on. -->
+    <!-- a transparent, narrow tile (it shows only on hover), spaced like the clock beside it -->
+    <Button x:Name="Btn" Style="{StaticResource PlainTileButton}" Padding="4,0"
+            Click="Btn_Click" MouseRightButtonUp="Btn_RightClick">
+        <Grid Width="{DynamicResource IconSlot}" Height="{DynamicResource GaugeSize}">
+            <c:GlyphIcon x:Name="Bell" FontSize="15" />
+            <Border x:Name="Badge" Background="{DynamicResource Accent}" CornerRadius="7" MinWidth="14" Height="14"
+                    Padding="3,0" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,6,-4,0" Visibility="Collapsed">
+                <TextBlock x:Name="BadgeText" Foreground="{DynamicResource OnAccent}" FontSize="9.5" FontWeight="SemiBold"
+                           LineStackingStrategy="BlockLineHeight" LineHeight="14"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" />
+            </Border>
+        </Grid>
+    </Button>
+</UserControl>

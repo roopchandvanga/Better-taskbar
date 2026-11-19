@@ -1,0 +1,16 @@
+# build output
+bin/
+obj/
+publish/
+TestResults/
+
+# IDE state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# scratch files from tooling
+readlog.*
+notif-probe.txt
