@@ -113,17 +113,24 @@ public class PopoverWindow : Window
         _frame.SetResourceReference(TextElement.ForegroundProperty, "SurfaceForeground");
         Content = _frame;
 
-        Loaded += (_, _) => Appear();
+        Loaded += (_, _) => Prepare();
+        ContentRendered += (_, _) => Appear();
         KeyDown += (_, e) => { if (e.Key == Key.Escape) Close(); };
     }
+
+    private IntPtr _hwnd;
+    private bool _revealed;
 
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        var hwnd = new WindowInteropHelper(this).Handle;
-        Native.AddExStyle(hwnd, Native.WS_EX_TOOLWINDOW);
+        _hwnd = new WindowInteropHelper(this).Handle;
+        Native.AddExStyle(_hwnd, Native.WS_EX_TOOLWINDOW);
         var dark = !ThemeManager.IsLightSurface(ThemeManager.Current);
         if (!Backdrop.TryApply(this, dark)) _frame.SetResourceReference(Border.BackgroundProperty, "SurfaceSolid");
+        // kept off the screen until its first frame is drawn (see Appear), so the opening isn't half over
+        // by the time it can be seen
+        if (Motion.Enabled) Native.SetCloak(_hwnd, true);
     }
 
     protected virtual void Position()
@@ -154,15 +161,47 @@ public class PopoverWindow : Window
     /// Rise out of the dock and grow from the element that opened it. The acrylic is drawn by Windows for the
     /// whole window and can't fade, so the window itself slides while its content fades and scales.
     /// </summary>
+    private const double StartScale = 0.94;
+    private const double Rise = 10;
+
+    /// <summary>Loaded (still cloaked): in place, a little small; a fallback reveal in case no frame is reported.</summary>
+    private void Prepare()
+    {
+        Position();
+        if (Motion.Enabled)
+        {
+            Motion.Set(_scale, ScaleTransform.ScaleXProperty, StartScale);
+            Motion.Set(_scale, ScaleTransform.ScaleYProperty, StartScale);
+        }
+        var fallback = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        fallback.Tick += (_, _) =>
+        {
+            fallback.Stop();
+            Appear();
+        };
+        fallback.Start();
+    }
+
+    /// <summary>
+    /// First frame drawn: reveal the window and, from that very frame, rise out of the dock and grow from the
+    /// element that opened it. The acrylic is drawn by Windows for the whole window and can't fade, so the
+    /// window itself slides while its content fades and scales.
+    /// </summary>
     private void Appear()
     {
+        if (_revealed) return;
+        _revealed = true;
         Position();
         var rest = Top;
         _frame.RenderTransformOrigin = new Point(AnchorFraction(), FromBelow ? 1 : 0);
+        if (Motion.Enabled) Top = rest + (FromBelow ? Rise : -Rise); // set while still cloaked: no flash at rest
+        Native.SetCloak(_hwnd, false);
+        if (_closing) return;
+
         Motion.To(_frame, OpacityProperty, 1, Motion.Fast);
-        Motion.To(_scale, ScaleTransform.ScaleXProperty, 1, AppearMs, Motion.Spring, from: 0.94);
-        Motion.To(_scale, ScaleTransform.ScaleYProperty, 1, AppearMs, Motion.Spring, from: 0.94);
-        Motion.To(this, TopProperty, rest, AppearMs, Motion.Spring, from: rest + (FromBelow ? 10 : -10), done: () =>
+        Motion.To(_scale, ScaleTransform.ScaleXProperty, 1, AppearMs, Motion.Spring);
+        Motion.To(_scale, ScaleTransform.ScaleYProperty, 1, AppearMs, Motion.Spring);
+        Motion.To(this, TopProperty, rest, AppearMs, Motion.Spring, done: () =>
         {
             BeginAnimation(TopProperty, null);
             if (!_closing) Position();

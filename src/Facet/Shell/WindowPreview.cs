@@ -33,8 +33,12 @@ internal sealed class WindowPreview : Window
     private readonly Border _frame;
     private readonly StackPanel _cards = new() { Orientation = Orientation.Horizontal };
     private readonly List<Card> _thumbs = [];
+    private readonly ScaleTransform _scale = new(1, 1);
     private IntPtr _hwnd;
     private bool _closing;
+    private bool _switching;  // replaced another app's preview: no rise, just a quick fade
+    private bool _settled;    // the opening motion is over (until then the window's Top is animated)
+    private double _rest;     // where its Top ends up
 
     private sealed record Card(IntPtr Source, IntPtr Thumb, FrameworkElement Root, Border Slot);
 
@@ -51,11 +55,30 @@ internal sealed class WindowPreview : Window
     public static void ShowFor(AppItem item, FrameworkElement anchor)
     {
         if (ReferenceEquals(_current?._item, item)) return;
+        var switching = _current is not null;
         _current?.CloseNow();
         var windows = item.Windows.Where(Native.IsWindow).Take(MaxWindows).ToList();
         if (windows.Count == 0) return;
-        _current = new WindowPreview(item, anchor, windows);
-        _current.Show();
+
+        // create the window (not shown yet): registers the thumbnails and builds the cards, so its final
+        // size is known and it can open right where it belongs instead of jumping there afterwards
+        var preview = new WindowPreview(item, anchor, windows) { _switching = switching };
+        new WindowInteropHelper(preview).EnsureHandle();
+        if (preview._thumbs.Count == 0)
+        {
+            preview.CloseNow();
+            return;
+        }
+        if (!preview.PlaceForOpening())
+        {
+            preview.CloseNow();
+            return;
+        }
+        // hidden from the screen until its first frame is drawn (ContentRendered), so the opening motion
+        // starts when it actually appears rather than being half over by then
+        if (Motion.Enabled) Native.SetCloak(preview._hwnd, true);
+        _current = preview;
+        preview.Show();
     }
 
     public static void HideCurrent() => _current?.CloseNow();
@@ -87,12 +110,18 @@ internal sealed class WindowPreview : Window
             UseAeroCaptionButtons = false,
         });
 
-        _frame = new Border { Padding = new Thickness(8), Child = _cards, Opacity = 0 };
+        _frame = new Border { Padding = new Thickness(8), Child = _cards, Opacity = 0, RenderTransform = _scale };
         _frame.SetResourceReference(Border.BackgroundProperty, "SurfaceBackground");
         _frame.SetResourceReference(TextElement.ForegroundProperty, "SurfaceForeground");
         Content = _frame;
-        Loaded += (_, _) => Appear();
-        SizeChanged += (_, _) => { Position(); PlaceThumbs(); };
+        Loaded += (_, _) => Prepare();
+        ContentRendered += (_, _) => Appear();
+        SizeChanged += (_, _) =>
+        {
+            // a card was closed: re-centre over the icon (not during the opening motion, which owns Top)
+            if (_settled) Position();
+            PlaceThumbs();
+        };
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -120,7 +149,6 @@ internal sealed class WindowPreview : Window
             var (w, h) = (Math.Max(60, Math.Round(size.Width * scale)), Math.Max(40, Math.Round(size.Height * scale)));
             _thumbs.Add(BuildCard(source, thumb, w, h));
         }
-        if (_thumbs.Count == 0) Dispatcher.BeginInvoke(CloseNow);
     }
 
     private Card BuildCard(IntPtr source, IntPtr thumb, double w, double h)
@@ -189,17 +217,56 @@ internal sealed class WindowPreview : Window
         if (_thumbs.Count == 0) CloseNow();
     }
 
-    /// <summary>Above the icon (below it when docked at the top), centred on it, inside the screen.</summary>
-    private void Position()
+    private const double Gap = 14;      // between the icon and the preview
+    private const double Rise = 16;     // the preview starts this much nearer the icon and rises into place
+    private const double OpenMs = 360;
+
+    /// <summary>
+    /// Top-left for a preview of <paramref name="size"/>: above the icon (below it when docked at the top),
+    /// centred on it, kept inside the display.
+    /// </summary>
+    private Point? Target(Size size)
     {
-        if (PresentationSource.FromVisual(_anchor) is null || ActualWidth <= 0 || Window.GetWindow(_anchor) is not { } dock) return;
+        if (PresentationSource.FromVisual(_anchor) is null || Window.GetWindow(_anchor) is not { } dock) return null;
         var dpi = VisualTreeHelper.GetDpi(_anchor);
         var origin = _anchor.PointToScreen(new Point(0, 0));
         double ax = origin.X / dpi.DpiScaleX, ay = origin.Y / dpi.DpiScaleY;
         var monitor = Native.GetMonitorFor(new WindowInteropHelper(dock).Handle).rcMonitor;
         double monLeft = monitor.Left / dpi.DpiScaleX, monRight = monitor.Right / dpi.DpiScaleX;
-        Left = Math.Clamp(ax + _anchor.ActualWidth / 2 - ActualWidth / 2, monLeft + 8, Math.Max(monLeft + 8, monRight - ActualWidth - 8));
-        Top = DockedAtTop ? ay + _anchor.ActualHeight + 14 : ay - ActualHeight - 14;
+        var left = Math.Clamp(ax + _anchor.ActualWidth / 2 - size.Width / 2, monLeft + 8, Math.Max(monLeft + 8, monRight - size.Width - 8));
+        var top = DockedAtTop ? ay + _anchor.ActualHeight + Gap : ay - size.Height - Gap;
+        return new Point(left, top);
+    }
+
+    /// <summary>
+    /// Measure the cards and put the (still hidden) window where it opens: its final place, or — when it
+    /// rises in — just short of it, nearer the icon. So the very first frame is already in the right spot.
+    /// </summary>
+    private bool PlaceForOpening()
+    {
+        _frame.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        if (Target(_frame.DesiredSize) is not { } at) return false;
+        Left = at.X;
+        _rest = at.Y;
+        Top = _switching || !Motion.Enabled ? _rest : _rest + (DockedAtTop ? -Rise : Rise);
+        return true;
+    }
+
+    /// <summary>Re-centre over the icon after the preview changed size (a card closed).</summary>
+    private void Position()
+    {
+        if (ActualWidth <= 0 || Target(new Size(ActualWidth, ActualHeight)) is not { } at) return;
+        Left = at.X;
+        Top = _rest = at.Y;
+    }
+
+    /// <summary>Where the icon's centre falls across the preview (0..1), so the content grows out of it.</summary>
+    private double AnchorFraction()
+    {
+        if (PresentationSource.FromVisual(_anchor) is null || ActualWidth <= 0) return 0.5;
+        var dpi = VisualTreeHelper.GetDpi(_anchor);
+        var x = _anchor.PointToScreen(new Point(_anchor.ActualWidth / 2, 0)).X / dpi.DpiScaleX;
+        return Math.Clamp((x - Left) / ActualWidth, 0.05, 0.95);
     }
 
     /// <summary>Tell the compositor where in this window to draw each thumbnail (physical pixels).</summary>
@@ -228,34 +295,76 @@ internal sealed class WindowPreview : Window
         }
     }
 
-    /// <summary>Rise into place like the dock's panels; thumbnails (drawn by DWM, not WPF) fade in alongside.</summary>
+    /// <summary>
+    /// Grow out of the icon: the content scales up from the point nearest the icon and fades in while the
+    /// window rises its last few pixels. The thumbnails are drawn by DWM, not WPF, so every frame they're
+    /// moved/scaled with the content and faded in step. Switching from another app's preview just fades.
+    /// </summary>
+    private const double StartScale = 0.88;
+
+    /// <summary>Loaded (still cloaked): set the opening's first frame — faded out, a little small.</summary>
+    private void Prepare()
+    {
+        _frame.RenderTransformOrigin = new Point(AnchorFraction(), DockedAtTop ? 0 : 1);
+        if (!_switching && Motion.Enabled)
+        {
+            Motion.Set(_scale, ScaleTransform.ScaleXProperty, StartScale);
+            Motion.Set(_scale, ScaleTransform.ScaleYProperty, StartScale);
+        }
+        PlaceThumbs(0);
+        // in case no frame is ever reported, reveal anyway
+        var fallback = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        fallback.Tick += (_, _) =>
+        {
+            fallback.Stop();
+            Appear();
+        };
+        fallback.Start();
+    }
+
+    private bool _revealed;
+
+    /// <summary>First frame drawn: reveal the window and run the opening from that very frame.</summary>
     private void Appear()
     {
-        Position();
-        PlaceThumbs(0);
-        var rest = Top;
-        var fromBelow = !DockedAtTop;
-        Motion.To(_frame, OpacityProperty, 1, Motion.Fast);
-        Motion.To(this, TopProperty, rest, Motion.Normal, Motion.EaseOut, from: rest + (fromBelow ? 8 : -8), done: () =>
+        if (_revealed) return;
+        _revealed = true;
+        Native.SetCloak(_hwnd, false);
+        if (_closing) return;
+        if (_switching || !Motion.Enabled)
         {
-            BeginAnimation(TopProperty, null);
-            if (!_closing) Position();
-        });
-        if (!Motion.Enabled)
-        {
+            Motion.To(_frame, OpacityProperty, 1, _switching ? 90 : 0);
+            Settle();
             PlaceThumbs();
             return;
         }
+
+        Motion.To(_frame, OpacityProperty, 1, 180, Motion.EaseOut);
+        Motion.To(_scale, ScaleTransform.ScaleXProperty, 1, OpenMs, Motion.Spring);
+        Motion.To(_scale, ScaleTransform.ScaleYProperty, 1, OpenMs, Motion.Spring);
+        Motion.To(this, TopProperty, _rest, OpenMs, Motion.Spring, done: Settle);
+
         var started = DateTime.UtcNow;
-        EventHandler? fade = null;
-        fade = (_, _) =>
+        EventHandler? follow = null;
+        follow = (_, _) =>
         {
-            var t = Math.Min(1, (DateTime.UtcNow - started).TotalMilliseconds / 180);
-            if (_closing) t = 1;
-            PlaceThumbs((byte)(255 * t));
-            if (t >= 1) CompositionTarget.Rendering -= fade;
+            var ms = (DateTime.UtcNow - started).TotalMilliseconds;
+            if (_closing || ms >= OpenMs + 40)
+            {
+                CompositionTarget.Rendering -= follow;
+                if (!_closing) PlaceThumbs();
+                return;
+            }
+            PlaceThumbs((byte)(255 * Math.Clamp(ms / 180, 0, 1))); // in step with the content's fade
         };
-        CompositionTarget.Rendering += fade;
+        CompositionTarget.Rendering += follow;
+    }
+
+    private void Settle()
+    {
+        BeginAnimation(TopProperty, null);
+        Top = _rest;
+        _settled = true;
     }
 
     private void CloseNow()

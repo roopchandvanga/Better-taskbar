@@ -65,6 +65,7 @@ internal static class Native
 
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     public const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    public const int DWMWA_CLOAK = 13;
     public const int DWMWA_CLOAKED = 14;
     public const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
 
@@ -315,6 +316,18 @@ internal static class Native
         var info = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
         GetMonitorInfo(mon, ref info);
         return info;
+    }
+
+    /// <summary>
+    /// Hide a shown window from the screen without hiding it from Windows (DWM cloak): it keeps laying out and
+    /// rendering, so it can be revealed on a frame that's ready — e.g. to start an opening animation exactly
+    /// when the window first appears instead of after its first, slow frame.
+    /// </summary>
+    public static void SetCloak(IntPtr hWnd, bool cloaked)
+    {
+        if (hWnd == IntPtr.Zero) return;
+        var value = cloaked ? 1 : 0;
+        DwmSetWindowAttribute(hWnd, DWMWA_CLOAK, ref value, sizeof(int));
     }
 
     /// <summary>The monitor (HMONITOR) under a screen point, or the nearest one.</summary>
