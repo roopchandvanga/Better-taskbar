@@ -1,9 +1,53 @@
-# Facet — a native smart dock for Windows
+# Facet — a better taskbar for Windows
 
-A see-through, auto-hiding dock that replaces (or floats above) the Windows taskbar and puts live widgets one glance away.
+A see-through, macOS-style dock for Windows 10 and 11 that replaces (or floats above) the taskbar: your apps, live widgets and quick controls in one glass bar, with motion that feels native.
 Built in C# / WPF on .NET 10. No web runtime, no account, no telemetry.
 
-## Run it
+![The Facet dock: apps on the left, widgets, quick controls, clock and notification bell on the right](docs/screenshots/dock.png)
+
+<sub>Screenshots are rendered from Facet's own UI with sample data.</sub>
+
+## Highlights
+
+| | |
+|---|---|
+| ![Quick controls panel above the dock](docs/screenshots/quick-panel.png) | **Quick controls.** Wi-Fi inside a battery ring, Bluetooth, Project and an expand arrow for volume, microphone, do not disturb and more. Tiles switch things on and off; their **›** opens Windows' network or Bluetooth list. Choose which buttons the tile shows and in what order. |
+| ![Notification preview above the bell](docs/screenshots/notifications.png) | **Notification bell.** Opens Windows' notification center (Win+N), counts what's new since you last looked, previews the latest three on hover, and is crossed out while Windows' do not disturb is on. |
+| ![Live window previews above an app icon](docs/screenshots/previews.png) | **Live window previews.** Rest the pointer on a running app to see its windows live, like the taskbar. Click one to switch to it, × to close it. |
+
+![The dock in the Glass (dark) and Frosted (light) themes](docs/screenshots/themes.png)
+
+## Features
+
+**Apps**
+- Your real taskbar pins plus running apps, with running dots and an active-app line that glides from app to app.
+- Icons near the pointer grow like the macOS dock; new apps slide in, closed ones slide out, and launching apps bounce until their window appears.
+- Click to focus or minimize (with several windows, clicks cycle through them), middle-click for a new window, right-click for its windows, pin / unpin and close. Drop files on an icon to open them with that app.
+
+**Widgets** (turn on, off and reorder in Settings → Widgets)
+- **Up next:** the next event with a countdown, and a **Join** button when it's a Teams, Zoom, Meet or Webex call starting within 10 minutes.
+- **Now playing:** any app using Windows media controls, tinted with the album art's colour.
+- **Weather**, **Todos**, and opt-in **CPU & RAM rings** and a **Pomodoro** timer.
+- **Custom widgets:** any shell command or URL (plus an optional JSON path) becomes a tile with its own refresh interval.
+- **Clock** with a calendar panel: month grid, agenda, quick add and read-only iCal subscriptions (Google, Outlook, iCloud).
+
+**Everything else**
+- **Command palette** (`Ctrl+Alt+Space`, or the first free fallback such as `Win+Alt+Space`): apps, dock actions, `=` math, `>` shell commands, `todo …`, folders, URLs, `?` web search.
+- **Smart alerts:** "Design review starts in 4 min — Pause music", low battery, CPU running hot, Pomodoro done; quiet hours and focus sessions hold them until they matter.
+- **Hover tips** centred on each icon and widget: what it is, then what clicking or scrolling does.
+
+## Look and behaviour
+
+- **Glass:** live blur of whatever is behind the dock (apps, video, wallpaper) with a hairline of light along its top edge. Themes: Glass, Frosted, Midnight, Black, White, or follow Windows' light/dark mode. The accent follows your Windows accent colour.
+- **Motion:** panels rise out of the dock and grow from what opened them, rings sweep to new values, the clock rolls over, the bell rings for a new notification. Every animation is short and only runs when something changes; they're off whenever Windows' "Animation effects" is, or with Settings → Appearance → Animations.
+- **Layout:** sizes S / M / L, floating or full width, bottom or top of the screen (drag the dock to switch).
+- **Auto-hide (on by default):** the dock slides up when the pointer touches the screen edge and stays while you're on it or a panel is open. Pressing the Windows key brings it up too. With auto-hide off, the dock keeps its own strip of the screen so maximized windows stop above it (Settings → Dock & taskbar → Reserve screen space).
+- **Taskbar:** optionally hide the Windows taskbar. It's always restored: on quit, by crash handlers, and at the next launch if Facet was killed.
+- **Fullscreen:** steps aside for fullscreen apps and games; with auto-hide on, hold the pointer at the edge a moment to bring it up anyway.
+- **Several displays:** optionally, hold the pointer at another display's edge and the dock moves there.
+- **Light on resources:** about 61 MB of memory and 0.2% CPU while idle on an 8-core laptop.
+
+## Install
 
 Facet runs on 64-bit Windows 10 (version 1809 or later) and Windows 11. It looks its best on Windows 11 22H2 or later; on older versions the panels are solid instead of frosted, and the bell opens the Action Center.
 
@@ -12,13 +56,13 @@ Facet runs on 64-bit Windows 10 (version 1809 or later) and Windows 11. It looks
 Needs the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```powershell
+git clone https://github.com/roopchandvanga/Better-taskbar.git
+cd Better-taskbar
 dotnet build Facet.slnx -c Release
 .\src\Facet\bin\Release\net10.0-windows10.0.22621.0\Facet.exe
 ```
 
 ### Make an exe to run or share
-
-Neither exe is checked into git, so a fresh clone builds one first (with the SDK above).
 
 **Standard (about 26 MB):** needs the .NET 10 Desktop Runtime on the PC that runs it. That isn't part of Windows: get it from the [.NET 10 download page](https://dotnet.microsoft.com/download/dotnet/10.0) (if it's missing, Windows says so when Facet starts and links to it).
 
@@ -27,7 +71,7 @@ dotnet publish src/Facet/Facet.csproj -c Release -r win-x64 --self-contained fal
 .\publish\Facet.exe
 ```
 
-**Standalone (about 69 MB):** carries its own copy of .NET, so it runs on any 64-bit Windows 10/11 PC with nothing to install. Settings are in `src/Facet/Properties/PublishProfiles/Standalone.pubxml`; add `-r win-arm64` for an ARM PC.
+**Standalone (about 69 MB):** carries its own copy of .NET, so it runs on any 64-bit Windows 10/11 PC with nothing to install. Add `-r win-arm64` for an ARM PC.
 
 ```powershell
 dotnet publish src/Facet/Facet.csproj -p:PublishProfile=Standalone
@@ -36,60 +80,47 @@ dotnet publish src/Facet/Facet.csproj -p:PublishProfile=Standalone
 
 An exe that arrives over the internet isn't code-signed, so Windows SmartScreen may say "Windows protected your PC": choose **More info → Run anyway**. Building it yourself avoids that.
 
-Tests (pure logic: iCal, alert rules, math, fuzzy search, JSON paths, settings):
+### Start with Windows
+
+Settings → Dock & taskbar → **Launch at startup** registers a Task Scheduler task, "Facet Dock", that starts the dock as soon as you sign in (no admin rights needed; turning the setting off removes it). Facet keeps the task pointed at whichever copy of Facet.exe is running, and waits for the taskbar to exist before hiding it.
+
+## Settings and data
+
+Right-click an empty part of the dock for themes, sizes, position, widgets and quick settings, or open **Settings** for everything.
+
+Everything lives in `%AppData%\Facet\`: `settings.json`, `events.json`, `todos.json`, `state.json` and `facet.log`. Settings can be exported and imported as JSON.
+
+**Privacy:** nothing leaves your PC except weather requests to Open-Meteo (MET Norway as a fallback) and the iCal / custom-widget URLs you add. Notification previews are read locally through Windows' notification API, which needs Settings → Privacy → Notifications to allow apps access; without it the bell still opens the notification center.
+
+## Compared with lumabar
+
+| | lumabar | Facet |
+|---|---|---|
+| Price / source | $5.99 licence, closed | Free and open source |
+| Runtime | — | Native WPF, no browser engine |
+| Glass | Bends the wallpaper only | Live compositor blur of whatever is behind the dock, including app windows |
+| Popovers | Custom | Real Windows 11 acrylic |
+| First launch | Sample data until accounts are connected | Real data immediately (system, media, weather via Windows location or city) |
+| Keyboard | — | Command palette with math, commands, todos, folders |
+| Long-tail widgets | Wait for the developer | Build your own from a command or URL |
+| Taskbar safety | Restored on quit | Restored on quit, by crash handlers *and* at the next launch if the process was killed |
+| Screen space | Overlaps maximised windows | With auto-hide off, keeps its own strip so maximised windows stop at it |
+| Fullscreen | Hides | Steps aside; with auto-hide on, still reachable by holding the pointer at the edge |
+
+## Project layout
+
+```
+src/Facet.Core       pure logic (net10.0): calendar parsing, alert rules, math, fuzzy search, settings; unit tested
+src/Facet            the WPF app: Shell/ (dock, taskbar, appbar, previews), Glass/, Apps/, Services/,
+                     Widgets/, Popovers/, Palette/, SettingsUi/, Theme/ (styles, motion, tooltips)
+tests/               xUnit tests for Facet.Core
+docs/screenshots/    the images in this README
+```
+
+Run the tests with:
 
 ```powershell
 dotnet test tests/Facet.Core.Tests
 ```
 
-## What's on the dock
-
-| Left | Middle | Right |
-|---|---|---|
-| Start button, your real taskbar pins + running apps (running dot, an active-app line that glides from app to app, click to focus/minimize, cycle windows, middle-click for a new window, right-click for windows / pin / close). Icons near the pointer grow like the macOS dock; resting on a running app shows live previews of its windows (click to switch, × to close) | Up next (mini calendar + next event countdown, and a Join button when the next event is a Teams / Zoom / Meet / Webex call starting within 10 minutes), Now playing (any app using Windows media controls, tinted with the album art's colour), Weather, Todos, your custom widgets. Opt-in: CPU & RAM rings, Pomodoro | Quick controls tile: Wi-Fi icon inside a battery ring gauge (percentage on top; red when low, green while charging; click → network list), Bluetooth (click → devices), Project (Win+P), and an expand chevron that opens volume, mic, do-not-disturb, Wi-Fi, Bluetooth, project and battery controls. Add or remove buttons (battery ring, volume, mic, do not disturb, screenshot) and reorder them: right-click the tile, or Settings → Widgets. Clock → calendar popover. Notification bell at the far right → Windows' notification center (Win+N); its badge counts notifications that arrived since you last opened it from the dock, hovering it previews the latest three, and it's crossed out while Windows' do not disturb is on |
-
-- **Look:** a borderless rounded rectangle (macOS-like ~18 px corners) with live acrylic blur from the Windows compositor — it shows whatever is actually behind it (apps, video, wallpaper) — and a hairline of light along its top edge. Icons are requested from Windows at the exact pixel size they're drawn at, so they stay sharp at any display scaling. The accent follows your Windows accent colour, and the theme can follow Windows' light/dark mode (Glass / Frosted).
-- **Motion:** panels rise out of the dock and grow from what opened them, and sink back when they close; apps slide in and out of the dock, bounce while starting, and the active-app line glides between them; rings sweep to new values, the clock rolls over, the bell rings for a new notification, quick-panel tiles fill from the centre. Every animation is short and only runs when something changes. Turn them off in Settings → Appearance → Animations (they're also off whenever Windows' "Animation effects" is).
-- **Windows key:** pressing Win (Start or Search opening) brings the dock up too; it tucks away again once Start closes.
-- **Themes:** Glass (dark, most see-through), Frosted (light), Midnight, Black, White · sizes S/M/L · floating or full width · bottom or top (drag the dock to switch).
-- **Several displays:** optionally (Settings → Dock & taskbar), hold the pointer at another display's bottom edge and the dock moves there.
-- **Auto-hide (on by default):** the dock stays out of sight and slides up when the cursor touches the bottom edge (top edge when docked at the top); it stays up while you're on it or one of its panels is open. Pair it with *Hide Windows taskbar* for a macOS-style setup. With auto-hide off, the dock reserves its strip of the screen and maximized windows stop above it (Settings → Dock & taskbar → Reserve screen space, on by default).
-- **Calendar popover:** month grid with event dots, agenda, quick add, read-only iCal subscriptions (Google / Outlook / iCloud) every 15 min.
-- **Smart alerts:** "Design review starts in 4 min — Pause music", low battery, CPU running hot, Pomodoro done. Quiet hours and focus sessions hold alerts until they matter.
-- **Command palette** (`Ctrl+Alt+Space`, or the first free fallback such as `Win+Alt+Space`): apps, dock actions, `=` math, `>` shell commands, `todo …`, folders, URLs, `?` web search.
-- **Custom widgets:** any shell command or URL (+ optional JSON path) becomes a tile with its own refresh interval.
-
-## Where it goes beyond lumabar
-
-| | lumabar | Facet |
-|---|---|---|
-| Price / source | $5.99 licence, closed | Free, source in this folder |
-| Runtime | — | Native WPF, no browser engine (measured: ~61 MB private memory, ~0.2% total CPU at idle on an 8-core laptop) |
-| Glass | Bends the wallpaper only | Live compositor blur of whatever is behind the dock, including app windows |
-| Popovers | Custom | Real Windows 11 acrylic (DWM) |
-| First launch | Sample data until accounts are connected | Real data immediately (system, media, weather via Windows location or city) |
-| Keyboard | — | Command palette with math, commands, todos, folders |
-| Long-tail widgets | Wait for the developer | Build your own from a command or URL |
-| Taskbar safety | Restored on quit | Restored on quit, crash handlers *and* next launch if the process was killed |
-| Screen space | Overlaps maximised windows | With auto-hide off, the dock keeps its own strip of the screen (an AppBar, like the taskbar), so maximised windows stop at it |
-| Fullscreen | Hides | Auto-hide: still reachable in fullscreen apps by holding the cursor at the edge ~0.35 s (like macOS); exclusive-fullscreen games are left alone. Always-visible mode steps aside for fullscreen apps; maximized windows keep the dock |
-| Auto-hide | — | macOS-style reveal at the screen edge |
-| Portability | — | Export / import settings as JSON |
-
-## Data
-
-Everything lives in `%AppData%\Facet\` (`settings.json`, `events.json`, `todos.json`, `state.json`, `facet.log`).
-Network calls: Open-Meteo for weather (MET Norway, api.met.no, as the fallback when Open-Meteo doesn't answer within 8 s), and only the iCal / custom-widget URLs you add.
-
-**Launch at startup** registers a Task Scheduler task, "Facet Dock", that starts the dock as soon as you sign in (no admin rights needed; turning the setting off removes it). Facet keeps the task pointed at whichever copy of Facet.exe is running, and waits for the taskbar to exist before hiding it. It isn't an HKCU `Run` entry: Explorer works through those one at a time, minutes after sign-in.
-
-**Launching Facet from another app's terminal:** some packaged apps (the Claude desktop app, for one) redirect AppData and HKCU for processes started from their shell, so a Facet launched that way reads and writes a private copy of its settings. Start it from Explorer, the Start menu, or `schtasks /run /tn "Facet Dock"` instead.
-
-## Layout
-
-```
-src/Facet.Core     pure logic (net10.0) — unit tested
-src/Facet          WPF app: Shell/ (dock, taskbar, appbar, hotkeys), Glass/, Apps/, Services/, Widgets/, Popovers/, Palette/, SettingsUi/
-tests/             xUnit tests for Facet.Core
-docs/superpowers/  design spec and implementation plan
-```
+**Developing from another app's terminal:** some packaged apps (the Claude desktop app, for one) redirect AppData and HKCU for processes started from their shell, so a Facet launched that way reads and writes a private copy of its settings. Start it from Explorer, the Start menu, or `schtasks /run /tn "Facet Dock"` instead.

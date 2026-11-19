@@ -15,3 +15,6 @@ TestResults/
 # scratch files from tooling
 readlog.*
 notif-probe.txt
+
+# notes from planning the build (kept locally, not part of the project)
+docs/superpowers/
