@@ -29,7 +29,9 @@
 
             <!-- Start + apps; AppStripAnimator magnifies the icons under the cursor and glides the active-app
                  line (ActiveBar, drawn over the icons' dot row) from app to app -->
-            <Grid x:Name="AppArea">
+            <!-- transparent background: the gaps between icons count as the strip too, so moving across
+                 them keeps the magnification going instead of dropping it -->
+            <Grid x:Name="AppArea" Background="Transparent">
             <StackPanel Orientation="Horizontal">
                 <Button x:Name="StartButton" Style="{StaticResource DockButton}" Width="{DynamicResource ItemSize}" Height="{DynamicResource ItemSize}"
                         Margin="{DynamicResource AppSpacing}" Click="StartButton_Click" ToolTip="Start">
