@@ -23,7 +23,7 @@ internal sealed class AppStripAnimator
 {
     private const double MaxScale = 1.38;       // fits inside the dock's own padding (icons grow mostly upward)
     private const double HoverScale = 1.14;     // single-icon hover when magnification or motion is off
-    private const double RangeItems = 2.3;      // falloff radius, in icon slots
+    private const double RangeItems = 2.0;      // falloff radius, in icon slots
     private const double SettleMs = 55;         // how quickly scales chase their targets
 
     private readonly FrameworkElement _area;
@@ -88,8 +88,11 @@ internal sealed class AppStripAnimator
             double target;
             if (full)
             {
+                // squared cosine bell: a sharp peak under the pointer, neighbours grow only a little
+                // (the next icon ~1.1x against 1.38x for the one pointed at), flat at the edges
                 var t = Math.Min(1, Math.Abs(x - centre) / range);
-                target = 1 + (MaxScale - 1) * (Math.Cos(Math.PI * t) + 1) / 2; // smooth bell, flat at the edges
+                var bell = (Math.Cos(Math.PI * t) + 1) / 2;
+                target = 1 + (MaxScale - 1) * bell * bell;
             }
             else
             {
